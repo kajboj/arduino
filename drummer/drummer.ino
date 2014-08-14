@@ -6,6 +6,7 @@ void setup() {
 }
 
 int tapDuration = 30;
+int quietTapDuration = 10;
 int barDuration = 200;
 
 void tap() {
@@ -16,10 +17,10 @@ void tap() {
 }
 
 void quiet() {
-  analogWrite(pin, 128);
-  delay(tapDuration);
-  analogWrite(pin, 0);
-  delay(barDuration-tapDuration);
+  digitalWrite(pin, HIGH);
+  delay(quietTapDuration);
+  digitalWrite(pin, LOW);
+  delay(barDuration-quietTapDuration);
 }
 
 void bar() {
