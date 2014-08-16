@@ -4,39 +4,45 @@ AF_DCMotor motor1(1);
 AF_DCMotor motor2(2);
 AF_DCMotor motor3(4);
 
+const int _ = 0;
+const int H = 1;
+const int F = 2;
+
 int tapDuration = 10;
 int quietTapDuration = 5;
 int swipeDuration = 200;
+int quietSwipeDuration = 100;
 int barDuration = 200;
 
-void tap(AF_DCMotor motor) {
-  motor.run(FORWARD);
-  delay(tapDuration);
-  motor.run(RELEASE);
-  delay(barDuration-tapDuration);
-}
+void startMotor(AF_DCMotor motor) { motor.run(FORWARD); }
+void stopMotor(AF_DCMotor motor)  { motor.run(RELEASE); }
 
-void quiet(AF_DCMotor motor) {
-  motor.run(FORWARD);
-  delay(quietTapDuration);
-  motor.run(RELEASE);
-  delay(barDuration-quietTapDuration);
-}
-
-void swipe() {
-  motor3.run(FORWARD);
-  delay(swipeDuration);
-  motor3.run(RELEASE);
-  delay(barDuration-swipeDuration);
-}
-
-void tap1()   { tap(motor1); }
-void quiet1() { quiet(motor1); }
-void tap2()   { tap(motor2); }
-void quiet2() { quiet(motor2); }
+void startBass() { startMotor(motor1); }
+void stopBass()  { stopMotor(motor1); }
+void startSnare() { startMotor(motor2); }
+void stopSnare()  { stopMotor(motor2); }
+void startSwipe() { startMotor(motor3); }
+void stopSwipe()  { stopMotor(motor3); }
 
 void bar() {
   delay(barDuration);
+}
+
+void p(int bass, int snare, int hihat) {
+  if ((bass == F) || (bass == H)) startBass();
+  if ((snare == F) || (snare == H)) startSnare();
+  if ((hihat == F) || (hihat == H)) startSwipe();
+  delay(quietTapDuration);
+  if (bass == H) stopBass();
+  if (snare == H) stopSnare();
+  delay(tapDuration-quietTapDuration);
+  if (bass == F) stopBass();
+  if (snare == F) stopSnare();
+  delay(quietSwipeDuration-tapDuration);
+  if (hihat == H) stopSwipe();
+  delay(swipeDuration-quietSwipeDuration);
+  if (hihat == F) stopSwipe();
+  delay(barDuration-swipeDuration);
 }
 
 void setup() {
@@ -46,20 +52,20 @@ void setup() {
 }
 
 void loop() {
-  tap1();
-    bar();
-    bar();
-    bar();
-  tap2();
-    bar();
-    bar();
-    bar();
-  tap1();
-  tap2();
-    bar();
-  quiet1();
-  tap2();
-  quiet1();
-    bar();
-  quiet2();
+  p(  F  ,  _  ,  F  ); // 0
+  p(  _  ,  _  ,  _  );
+  p(  _  ,  _  ,  H  );
+  p(  _  ,  _  ,  _  );
+  p(  _  ,  F  ,  F  ); // 1
+  p(  _  ,  _  ,  _  );
+  p(  F  ,  _  ,  H  );
+  p(  _  ,  H  ,  _  );
+  p(  _  ,  _  ,  F  ); // 2
+  p(  _  ,  H  ,  _  );
+  p(  F  ,  _  ,  H  );
+  p(  _  ,  _  ,  _  );
+  p(  _  ,  F  ,  F  ); // 3
+  p(  _  ,  _  ,  _  );
+  p(  _  ,  _  ,  H  );
+  p(  _  ,  _  ,  _  );
 }
