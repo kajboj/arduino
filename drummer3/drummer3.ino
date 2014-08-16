@@ -8,11 +8,11 @@ const int _ = 0;
 const int H = 1;
 const int F = 2;
 
-int tapDuration = 10;
-int quietTapDuration = 5;
-int swipeDuration = 200;
-int quietSwipeDuration = 100;
-int barDuration = 200;
+int tapDuration        = 10;
+int quietTapDuration   = 5;
+int swipeDuration      = 150;
+int quietSwipeDuration = 75;
+int barDuration        = 150;
 
 void startMotor(AF_DCMotor motor) { motor.run(FORWARD); }
 void stopMotor(AF_DCMotor motor)  { motor.run(RELEASE); }
@@ -52,20 +52,56 @@ void setup() {
 }
 
 void loop() {
-  p(  F  ,  _  ,  F  ); // 0
+  p(  _  ,  F  ,  _  ); // 0
   p(  _  ,  _  ,  _  );
-  p(  _  ,  _  ,  H  );
-  p(  _  ,  _  ,  _  );
-  p(  _  ,  F  ,  F  ); // 1
-  p(  _  ,  _  ,  _  );
-  p(  F  ,  _  ,  H  );
   p(  _  ,  H  ,  _  );
-  p(  _  ,  _  ,  F  ); // 2
+  p(  _  ,  _  ,  _  );
+  p(  _  ,  H  ,  _  ); // 1
+  p(  _  ,  F  ,  _  );
+  p(  _  ,  _  ,  _  );
   p(  _  ,  H  ,  _  );
-  p(  F  ,  _  ,  H  );
+  p(  _  ,  F  ,  _  ); // 2
   p(  _  ,  _  ,  _  );
-  p(  _  ,  F  ,  F  ); // 3
+  p(  _  ,  H  ,  _  );
+  p(  _  ,  F  ,  _  );
+  p(  _  ,  _  ,  _  ); // 3
+  p(  _  ,  F  ,  _  );
   p(  _  ,  _  ,  _  );
-  p(  _  ,  _  ,  H  );
+  p(  _  ,  H  ,  _  );
+
+  p(  F  ,  _  ,  _  ); // 0
   p(  _  ,  _  ,  _  );
+  p(  H  ,  _  ,  _  );
+  p(  _  ,  _  ,  _  );
+  p(  H  ,  _  ,  _  ); // 1
+  p(  F  ,  _  ,  _  );
+  p(  _  ,  _  ,  _  );
+  p(  H  ,  _  ,  _  );
+  p(  F  ,  _  ,  _  ); // 2
+  p(  _  ,  _  ,  _  );
+  p(  H  ,  _  ,  _  );
+  p(  F  ,  _  ,  _  );
+  p(  _  ,  _  ,  _  ); // 3
+  p(  F  ,  _  ,  _  );
+  p(  _  ,  _  ,  _  );
+  p(  H  ,  _  ,  _  );
+
+  while (true) {
+    p(  F  ,  F  ,  H  ); // 0
+    p(  _  ,  _  ,  _  );
+    p(  _  ,  _  ,  F  );
+    p(  H  ,  F  ,  _  );
+    p(  F  ,  _  ,  H  ); // 1
+    p(  _  ,  _  ,  _  );
+    p(  _  ,  F  ,  F  );
+    p(  H  ,  _  ,  _  );
+    p(  F  ,  _  ,  H  ); // 2
+    p(  _  ,  H  ,  _  );
+    p(  _  ,  F  ,  F  );
+    p(  H  ,  _  ,  _  );
+    p(  F  ,  _  ,  H  ); // 3
+    p(  _  ,  _  ,  _  );
+    p(  _  ,  _  ,  F  );
+    p(  H  ,  F  ,  _  );
+  }
 }
