@@ -2,7 +2,6 @@
 
 AF_DCMotor motorL(1);
 AF_DCMotor motorR(2);
-AF_DCMotor motorM(3);
 
 int leftMotorPower = 100;
 int rightMotorPower = 128;
@@ -19,7 +18,6 @@ void setup() {
 
   motorL.setSpeed(leftMotorPower);
   motorR.setSpeed(rightMotorPower);
-  motorM.setSpeed(0);
 }
 
 void ping() {
