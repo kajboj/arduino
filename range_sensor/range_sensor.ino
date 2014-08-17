@@ -3,24 +3,14 @@
 AF_DCMotor motorL(1);
 AF_DCMotor motorR(2);
 
-int motorLForwardPower = 255;
-int motorLBackwardPower = 255;
-
-int motorRForwardPower = 160;
-int motorRBackwardPower = 160;
-
-int fullRotationMillis = 320; 
-int rotationConstant = 50;
-
-int forwardStepMillis = 200;
+int motorSpeed = 80;
 
 int scanDelayMillis = 300;
 
 int distanceFromObstacle = 20;
 
-int leftDistance;
-int middleDistance;
-int rightDistance;
+int stepLMillis = 400;
+int stepRMillis = 440;
 
 #define trigPin 10
 #define echoPin 9
@@ -47,113 +37,60 @@ int getDistance() {
   return distance;
 }
 
-void startRForward() {
-  motorR.setSpeed(motorRForwardPower);
-  motorR.run(FORWARD);
-}
-
-void startRBackward() {
-  motorR.setSpeed(motorRBackwardPower);
-  motorR.run(BACKWARD);
-}
-
-void stopR() { motorR.run(RELEASE); }
-
-void startLForward() {
-  motorL.setSpeed(motorLForwardPower);
-  motorL.run(FORWARD);
-}
-
-void startLBackward() {
-  motorL.setSpeed(motorLBackwardPower);
-  motorL.run(BACKWARD);
-}
-
-void stopL() { motorL.run(RELEASE); }
-
-int degreesToTime(int degrees) {
-  int fraction = (int) ((degrees / 360.0) * fullRotationMillis);
-  return fraction + rotationConstant;
-}
-
-void rotateLeft(int degrees) {
-  startLBackward();
-  startRForward();
-  delay(degreesToTime(degrees));
-  stopL();
-  stopR();
-}
-
-void rotateRight(int degrees) {
-  startRBackward();
-  startLForward();
-  delay(degreesToTime(degrees));
-  stopR();
-  stopL();
-}
-
-void rotateRandom(int degrees) {
+void rotateRandom() {
   long coinFlip = random(0, 2);
   if (coinFlip == 0) {
-    rotateRight(degrees);
+    motorL.run(BACKWARD);
+    delay(2*stepLMillis);
+    motorL.run(RELEASE);
   } else {
-    rotateLeft(degrees);
+    motorR.run(BACKWARD);
+    delay(2*stepRMillis);
+    motorR.run(RELEASE);
   }
-}
-
-void goForward() {
-  startRForward();
-  startLForward();
-  delay(forwardStepMillis);
-  stopR();
-  stopL();
 }
 
 boolean blocked(int distance) {
   return distance < distanceFromObstacle;
 }
 
-void makeStep() {
-  boolean l = blocked(leftDistance);
-  boolean m = blocked(middleDistance);
-  boolean r = blocked(rightDistance);
-
-  if (l && m && r) { rotateRandom(90); return; }
-  if (l && m)      { rotateRight(45);  return; }
-  if (m && r)      { rotateLeft(45);   return; }
-  if (l && r)      { goForward();      return; }
-  if (l)           { rotateRight(22);  return; }
-  if (m)           { rotateRandom(45); return; }
-  if (r)           { rotateLeft(22);   return; }
-
-  goForward();
-}
-
-void scanSurroundings() {
-  middleDistance = getDistance();
-
-  rotateLeft(45);
-  delay(scanDelayMillis);
-  leftDistance = getDistance();
-
-  rotateRight(90);
-  delay(scanDelayMillis);
-  rightDistance = getDistance();
-
-  rotateLeft(45);
-}
-
 void setup() {
   Serial.begin (9600);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
+
+  motorR.setSpeed(motorSpeed);
+  motorL.setSpeed(motorSpeed);
+}
+
+void stepForward(AF_DCMotor motor, int time) {
+  motor.run(FORWARD);
+  delay(time);
+  motor.run(RELEASE);
+}
+
+void stepBackward(AF_DCMotor motor, int time) {
+  motor.run(BACKWARD);
+  delay(time);
+  motor.run(RELEASE);
+}
+
+boolean tryForward(AF_DCMotor motor, int stepMillis) {
+  stepForward(motor, stepMillis);
+
+  int distance = getDistance();
+  if (blocked(distance)) {
+    stepBackward(motor, stepMillis);
+    return false;
+  }
+  return true;
 }
 
 void loop() {
-  scanSurroundings();
-  // rotateLeft(90);
-  delay(2000);
-  // delay(500);
-  // makeStep();
-  // delay(500);
+  boolean left = tryForward(motorL, stepLMillis);
+  boolean right = tryForward(motorR, stepRMillis);
+
+  if (!right && !left) {
+    rotateRandom();
+  }
 }
