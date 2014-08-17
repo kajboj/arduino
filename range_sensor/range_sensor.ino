@@ -3,22 +3,27 @@
 AF_DCMotor motorL(1);
 AF_DCMotor motorR(2);
 
-int leftMotorPower = 100;
-int rightMotorPower = 128;
-int stepDuration = 200;
-int distanceFromObstacle = 15;
+int motorLForwardPower = 255;
+int motorLBackwardPower = 255;
+
+int motorRForwardPower = 160;
+int motorRBackwardPower = 160;
+
+int fullRotationMillis = 320; 
+int rotationConstant = 50;
+
+int forwardStepMillis = 200;
+
+int scanDelayMillis = 300;
+
+int distanceFromObstacle = 20;
+
+int leftDistance;
+int middleDistance;
+int rightDistance;
 
 #define trigPin 10
 #define echoPin 9
-
-void setup() {
-  Serial.begin (9600);
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-
-  motorL.setSpeed(leftMotorPower);
-  motorR.setSpeed(rightMotorPower);
-}
 
 void ping() {
   digitalWrite(trigPin, LOW);
@@ -28,14 +33,13 @@ void ping() {
   digitalWrite(trigPin, LOW);
 }
 
-float timeToDistance(unsigned long time) {
-  float t = (float) time;
-  return (t/2) / 29.1;
+int timeToDistance(unsigned long time) {
+  return (time/2) / 29.1;
 }
 
-float getDistance() {
-  long duration;
-  float distance;
+int getDistance() {
+  unsigned long duration;
+  int distance;
   ping();
   duration = pulseIn(echoPin, HIGH);
   distance = timeToDistance(duration);
@@ -43,39 +47,113 @@ float getDistance() {
   return distance;
 }
 
-void stepForward(AF_DCMotor motor) {
-  motor.run(FORWARD);
-  delay(stepDuration);
-  motor.run(RELEASE);
+void startRForward() {
+  motorR.setSpeed(motorRForwardPower);
+  motorR.run(FORWARD);
 }
 
-void stepBackward(AF_DCMotor motor) {
-  motor.run(BACKWARD);
-  delay(stepDuration);
-  motor.run(RELEASE);
+void startRBackward() {
+  motorR.setSpeed(motorRBackwardPower);
+  motorR.run(BACKWARD);
 }
 
-void rotate() {
-  stepForward(motorL);
-  stepBackward(motorR);
-  stepForward(motorL);
-  stepBackward(motorR);
-  stepForward(motorL);
-  stepBackward(motorR);
+void stopR() { motorR.run(RELEASE); }
+
+void startLForward() {
+  motorL.setSpeed(motorLForwardPower);
+  motorL.run(FORWARD);
 }
 
-float makeStep(AF_DCMotor motor) {
-  float distance;
-  distance = getDistance();
-  if (distance > distanceFromObstacle) {
-    stepForward(motor);
+void startLBackward() {
+  motorL.setSpeed(motorLBackwardPower);
+  motorL.run(BACKWARD);
+}
+
+void stopL() { motorL.run(RELEASE); }
+
+int degreesToTime(int degrees) {
+  int fraction = (int) ((degrees / 360.0) * fullRotationMillis);
+  return fraction + rotationConstant;
+}
+
+void rotateLeft(int degrees) {
+  startLBackward();
+  startRForward();
+  delay(degreesToTime(degrees));
+  stopL();
+  stopR();
+}
+
+void rotateRight(int degrees) {
+  startRBackward();
+  startLForward();
+  delay(degreesToTime(degrees));
+  stopR();
+  stopL();
+}
+
+void rotateRandom(int degrees) {
+  long coinFlip = random(0, 2);
+  if (coinFlip == 0) {
+    rotateRight(degrees);
   } else {
-    stepBackward(motor);
-    rotate();
+    rotateLeft(degrees);
   }
 }
 
+void goForward() {
+  startRForward();
+  startLForward();
+  delay(forwardStepMillis);
+  stopR();
+  stopL();
+}
+
+boolean blocked(int distance) {
+  return distance < distanceFromObstacle;
+}
+
+void makeStep() {
+  boolean l = blocked(leftDistance);
+  boolean m = blocked(middleDistance);
+  boolean r = blocked(rightDistance);
+
+  if (l && m && r) { rotateRandom(90); return; }
+  if (l && m)      { rotateRight(45);  return; }
+  if (m && r)      { rotateLeft(45);   return; }
+  if (l && r)      { goForward();      return; }
+  if (l)           { rotateRight(22);  return; }
+  if (m)           { rotateRandom(45); return; }
+  if (r)           { rotateLeft(22);   return; }
+
+  goForward();
+}
+
+void scanSurroundings() {
+  middleDistance = getDistance();
+
+  rotateLeft(45);
+  delay(scanDelayMillis);
+  leftDistance = getDistance();
+
+  rotateRight(90);
+  delay(scanDelayMillis);
+  rightDistance = getDistance();
+
+  rotateLeft(45);
+}
+
+void setup() {
+  Serial.begin (9600);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+}
+
 void loop() {
-  makeStep(motorL);
-  makeStep(motorR);
+  scanSurroundings();
+  // rotateLeft(90);
+  delay(2000);
+  // delay(500);
+  // makeStep();
+  // delay(500);
 }
