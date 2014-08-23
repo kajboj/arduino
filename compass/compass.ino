@@ -31,8 +31,11 @@ DRDY      N/A
 
 #define MOTOR_SPEED 120 
 
-#define LONG_STEP_DURATION 20
-#define SHORT_STEP_DURATION 10
+#define ROTATION_LONG_STEP_DURATION 20
+#define ROTATION_SHORT_STEP_DURATION 10
+
+#define MOVE_LONG_STEP_DURATION 50 
+#define MOVE_SHORT_STEP_DURATION 10 
 
 AF_DCMotor motorL(1);
 AF_DCMotor motorR(2);
@@ -47,6 +50,8 @@ void setup()
 
   motorR.setSpeed(MOTOR_SPEED);
   motorL.setSpeed(MOTOR_SPEED);
+
+  rotateTo(0);
 }
 
 void rotateLeft(int time) {
@@ -65,23 +70,49 @@ void rotateRight(int time) {
   motorL.run(RELEASE);
 }
 
-int addAngle(int a, int b) {
-  int c = a + b;
+void stepForward(int time) {
+  motorR.run(FORWARD);
+  motorL.run(FORWARD);
+  delay(time);
+  motorR.run(RELEASE);
+  motorL.run(RELEASE);
+}
 
-  if (c > 180) {
-    return c - 360;
-  } else if (c < -179) {
-    return c + 360;
+void stepBackward(int time) {
+  motorR.run(BACKWARD);
+  motorL.run(BACKWARD);
+  delay(time);
+  motorR.run(RELEASE);
+  motorL.run(RELEASE);
+}
+
+int normalizeAngle(int a) {
+  if (a > 180) {
+    return a - 360;
+  } else if (a < -179) {
+    return a + 360;
   } else {
-    return c;
+    return a;
   }
 }
 
-int stepDuration(int angleDiff) {
+int addAngle(int a, int b) {
+  return normalizeAngle(a + b);
+}
+
+int stepDurationByAngle(int angleDiff) {
   if (abs(angleDiff) < 5) {
-    return SHORT_STEP_DURATION;
+    return ROTATION_SHORT_STEP_DURATION;
   } else {
-    return LONG_STEP_DURATION;
+    return ROTATION_LONG_STEP_DURATION;
+  }
+}
+
+int stepDurationByDistance(int distanceDiff) {
+  if (abs(distanceDiff) < 10) {
+    return MOVE_SHORT_STEP_DURATION;
+  } else {
+    return MOVE_LONG_STEP_DURATION;
   }
 }
 
@@ -90,29 +121,56 @@ void rotateBy(int degrees) {
   int angleDiff;
 
   do {
+    int angle = getAngle();
     angleDiff = targetAngle - getAngle();
 
     if (angleDiff == 0) {
-      Serial.println("DONE!");
+      Serial.println("ROTATION DONE!");
     } else if (angleDiff < 0) {
-      rotateLeft(stepDuration(angleDiff));
+      rotateLeft(stepDurationByAngle(angleDiff));
     } else {
-      rotateRight(stepDuration(angleDiff));
+      rotateRight(stepDurationByAngle(angleDiff));
     }
-    Serial.print(angleDiff);
-    Serial.println(" degrees");
-    Serial.print(getDistanceInMm());
-    Serial.println(" mm");
-
-    // delay(500);
   } while (angleDiff != 0); 
+}
+
+void rotateTo(int degrees) {
+  int angleDiff = addAngle(degrees, -getAngle());
+  rotateBy(angleDiff);
+}
+
+void goToObstacle() {
+  int targetAngle = getAngle(); 
+  int targetDistance = 100;
+  int distanceDiff;
+
+  do {
+    rotateTo(targetAngle);
+
+    distanceDiff = getDistanceInMm() - targetDistance;
+
+    if (abs(distanceDiff) <= 5) {
+      Serial.println("MOVE DONE!");
+    } else if (distanceDiff < 0) {
+      stepBackward(stepDurationByDistance(distanceDiff));
+    } else {
+      stepForward(stepDurationByDistance(distanceDiff));
+    }
+  } while (abs(distanceDiff) > 5); 
+}
+
+int randomAngle() {
+  long coinFlip = random(0, 2);
+  if (coinFlip == 0) {
+    return 90;
+  } else {
+    return -90;
+  }
 }
 
 void loop() 
 {
-  rotateBy(90);
-  delay(1000);
-  rotateBy(-90);
+  goToObstacle();
   delay(1000);
 }
 
