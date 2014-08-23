@@ -1,0 +1,18 @@
+max = 3 steps/s
+
+0.1 cm/step
+
+L = 1 cm
+R = 0.3 cm
+
+L = 10 steps
+R = 3 steps
+
+L = 50
+R = 21
+
+x = 50.0/21
+
+50.times.map do |i|
+  [i, (i / x).round]
+end

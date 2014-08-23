@@ -87,10 +87,15 @@ boolean tryForward(AF_DCMotor motor, int stepMillis) {
 }
 
 void loop() {
-  boolean left = tryForward(motorL, stepLMillis);
-  boolean right = tryForward(motorR, stepRMillis);
+  stepForward(motorR, stepLMillis);
+  delay(500);
+  
+  stepForward(motorL, stepLMillis);
+  delay(500);
+  // boolean left = tryForward(motorL, stepLMillis);
+  // boolean right = tryForward(motorR, stepRMillis);
 
-  if (!right && !left) {
-    rotateRandom();
-  }
+  // if (!right && !left) {
+  //   rotateRandom();
+  // }
 }
