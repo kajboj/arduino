@@ -38,7 +38,8 @@ DRDY      N/A
 #define MOVE_SHORT_STEP_DURATION 10 
 
 #define DISTANCE_SCAN_SAMPLE_COUNT 15
-#define DISTANCE_FROM_OBSTACLE_MM 100 
+#define DISTANCE_FROM_OBSTACLE_MM 150 
+#define DISTANCE_FROM_OBSTACLE_TOLERANCE_MM 10 
 
 #define RANGE_FINDER_REPEAT 5 
 
@@ -158,9 +159,13 @@ void goSlowlyToObstacle(int targetAngle) {
   int distanceDiff;
 
   do {
-    distanceDiff = getDistanceInMm() - targetDistance;
+    int distance = getDistanceInMm();
 
-    if (abs(distanceDiff) <= 5) {
+    if (isInfinite(distance)) { return; };
+
+    distanceDiff = distance - targetDistance;
+
+    if (abs(distanceDiff) <= DISTANCE_FROM_OBSTACLE_TOLERANCE_MM) {
     } else if (distanceDiff < 0) {
       rotateTo(targetAngle, rotateLeft, rotateRight);
       stepBackward(stepDurationByDistance(distanceDiff));
@@ -168,7 +173,7 @@ void goSlowlyToObstacle(int targetAngle) {
       rotateTo(targetAngle, rotateLeftForward, rotateRightForward);
       stepForward(stepDurationByDistance(distanceDiff));
     }
-  } while (abs(distanceDiff) > 5); 
+  } while (abs(distanceDiff) > DISTANCE_FROM_OBSTACLE_TOLERANCE_MM); 
 }
 
 void goToObstacle(int angle) {
