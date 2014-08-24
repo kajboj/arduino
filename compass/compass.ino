@@ -37,6 +37,10 @@ DRDY      N/A
 #define MOVE_LONG_STEP_DURATION 50 
 #define MOVE_SHORT_STEP_DURATION 10 
 
+#define DISTANCE_SCAN_SAMPLE_COUNT 15
+
+#define RANGE_FINDER_REPEAT 5 
+
 AF_DCMotor motorL(1);
 AF_DCMotor motorR(2);
 
@@ -50,8 +54,6 @@ void setup()
 
   motorR.setSpeed(MOTOR_SPEED);
   motorL.setSpeed(MOTOR_SPEED);
-
-  rotateTo(0);
 }
 
 void rotateLeft(int time) {
@@ -86,6 +88,7 @@ void stepBackward(int time) {
   motorL.run(RELEASE);
 }
 
+// we could use division modulo instead of all those ifs
 int normalizeAngle(int a) {
   if (a > 180) {
     return a - 360;
@@ -122,10 +125,9 @@ void rotateBy(int degrees) {
 
   do {
     int angle = getAngle();
-    angleDiff = targetAngle - getAngle();
+    angleDiff = addAngle(targetAngle, -getAngle());
 
     if (angleDiff == 0) {
-      Serial.println("ROTATION DONE!");
     } else if (angleDiff < 0) {
       rotateLeft(stepDurationByAngle(angleDiff));
     } else {
@@ -150,7 +152,6 @@ void goToObstacle() {
     distanceDiff = getDistanceInMm() - targetDistance;
 
     if (abs(distanceDiff) <= 5) {
-      Serial.println("MOVE DONE!");
     } else if (distanceDiff < 0) {
       stepBackward(stepDurationByDistance(distanceDiff));
     } else {
@@ -168,12 +169,36 @@ int randomAngle() {
   }
 }
 
-void loop() 
-{
-  goToObstacle();
-  delay(1000);
+void printVal(String msg, int val) {
+  Serial.print(msg);
+  Serial.println(val);
 }
 
+int chooseDirection(int angleRange) {
+  int maxDistance = 0; 
+  int maxDistanceAngle; 
+  int initialAngle = getAngle();
+  int rotation = round((float)angleRange / DISTANCE_SCAN_SAMPLE_COUNT);
+
+  for(int angle=initialAngle; angle<=initialAngle+angleRange; angle+=rotation) {
+    int distance = getDistanceInMm();
+    if (distance > maxDistance) {
+      maxDistance = distance;
+      maxDistanceAngle = getAngle();
+    }
+
+    printVal("angle = ", angle);
+    printVal("distance = ", distance);
+    printVal("maxDistance = ", maxDistance);
+    printVal("maxDistanceAngle = ", maxDistanceAngle);
+
+    delay(500);
+
+    rotateTo(angle);
+  }
+
+  return maxDistanceAngle;
+}
 
 /* This function will initialise the module and only needs to be run once
    after the module is first powered up or reset */
@@ -231,13 +256,37 @@ void ping() {
   digitalWrite(trigPin, LOW);
 }
 
+boolean isInfinite(int distance) {
+  return distance == INFINITE_DISTANCE;
+}
+
 int getDistanceInMm() {
-  ping();
-  unsigned long duration = pulseIn(echoPin, HIGH);
+  unsigned long duration;
+  int sumDuration = 0;
+
+  for(int i=0; i<RANGE_FINDER_REPEAT; i++) {
+    ping();
+    sumDuration += pulseIn(echoPin, HIGH);
+  }
+
+  duration = round((float)sumDuration / RANGE_FINDER_REPEAT);
 
   if (duration == 0) {
     return INFINITE_DISTANCE;
   } else {
     return (duration/2) / 2.91;
   };
+}
+
+void loop() 
+{
+  // rotateTo(chooseDirection());
+  int angle = chooseDirection(90);
+
+  Serial.print("direction: ");
+  Serial.println(angle);
+
+  rotateBy(-90);
+
+  delay(5000);
 }
