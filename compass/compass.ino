@@ -72,6 +72,18 @@ void rotateRight(int time) {
   motorL.run(RELEASE);
 }
 
+void rotateLeftForward(int time) {
+  motorR.run(FORWARD);
+  delay(time);
+  motorR.run(RELEASE);
+}
+
+void rotateRightForward(int time) {
+  motorL.run(FORWARD);
+  delay(time);
+  motorL.run(RELEASE);
+}
+
 void stepForward(int time) {
   motorR.run(FORWARD);
   motorL.run(FORWARD);
@@ -119,7 +131,7 @@ int stepDurationByDistance(int distanceDiff) {
   }
 }
 
-void rotateBy(int degrees) {
+void rotateBy(int degrees, void (*rotateLeft)(int), void (*rotateRight)(int)) {
   int targetAngle = addAngle(getAngle(), degrees);
   int angleDiff;
 
@@ -136,9 +148,9 @@ void rotateBy(int degrees) {
   } while (angleDiff != 0); 
 }
 
-void rotateTo(int degrees) {
+void rotateTo(int degrees, void (*rotateLeft)(int), void (*rotateRight)(int)) {
   int angleDiff = addAngle(degrees, -getAngle());
-  rotateBy(angleDiff);
+  rotateBy(angleDiff, *rotateLeft, *rotateRight);
 }
 
 void goToObstacle() {
@@ -147,7 +159,7 @@ void goToObstacle() {
   int distanceDiff;
 
   do {
-    rotateTo(targetAngle);
+    rotateTo(targetAngle, rotateLeft, rotateRight);
 
     distanceDiff = getDistanceInMm() - targetDistance;
 
@@ -174,7 +186,7 @@ void printVal(String msg, int val) {
   Serial.println(val);
 }
 
-int chooseDirection(int angleRange) {
+int scanForBestDirection(int angleRange) {
   int maxDistance = 0; 
   int maxDistanceAngle = 0; 
   int initialAngle = getAngle();
@@ -193,7 +205,7 @@ int chooseDirection(int angleRange) {
     // printVal("maxDistanceAngle = ", maxDistanceAngle);
     // delay(500);
 
-    rotateTo(angle);
+    rotateTo(angle, rotateLeft, rotateRight);
   }
 
   return maxDistanceAngle;
@@ -286,11 +298,11 @@ int getDistanceInMm() {
 
 void loop() 
 {
-  rotateTo(chooseDirection(360));
+  rotateTo(scanForBestDirection(360), rotateLeft, rotateRight);
   goToObstacle();
 
-  // chooseDirection(90);
-  // rotateBy(-90);
+  // scanForBestDirection(90);
+  // rotateBy(-90, rotateLeftForward, rotateRightForward);
 
   delay(1000);
 }
