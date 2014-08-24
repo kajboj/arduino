@@ -29,7 +29,7 @@ DRDY      N/A
 
 #define INFINITE_DISTANCE 32767
 
-#define MOTOR_SPEED 120 
+#define NORMAL_MOTOR_SPEED 120 
 
 #define ROTATION_LONG_STEP_DURATION 20
 #define ROTATION_SHORT_STEP_DURATION 10
@@ -38,6 +38,7 @@ DRDY      N/A
 #define MOVE_SHORT_STEP_DURATION 10 
 
 #define DISTANCE_SCAN_SAMPLE_COUNT 15
+#define DISTANCE_FROM_OBSTACLE_MM 100 
 
 #define RANGE_FINDER_REPEAT 5 
 
@@ -52,8 +53,8 @@ void setup()
 
   Init_HMC5803L();
 
-  motorR.setSpeed(MOTOR_SPEED);
-  motorL.setSpeed(MOTOR_SPEED);
+  motorR.setSpeed(NORMAL_MOTOR_SPEED);
+  motorL.setSpeed(NORMAL_MOTOR_SPEED);
 }
 
 void rotateLeft(int time) {
@@ -136,7 +137,6 @@ void rotateBy(int degrees, void (*rotateLeft)(int), void (*rotateRight)(int)) {
   int angleDiff;
 
   do {
-    int angle = getAngle();
     angleDiff = addAngle(targetAngle, -getAngle());
 
     if (angleDiff == 0) {
@@ -153,23 +153,26 @@ void rotateTo(int degrees, void (*rotateLeft)(int), void (*rotateRight)(int)) {
   rotateBy(angleDiff, *rotateLeft, *rotateRight);
 }
 
-void goToObstacle() {
-  int targetAngle = getAngle(); 
-  int targetDistance = 100;
+void goSlowlyToObstacle(int targetAngle) {
+  int targetDistance = DISTANCE_FROM_OBSTACLE_MM;
   int distanceDiff;
 
   do {
-    rotateTo(targetAngle, rotateLeft, rotateRight);
-
     distanceDiff = getDistanceInMm() - targetDistance;
 
     if (abs(distanceDiff) <= 5) {
     } else if (distanceDiff < 0) {
+      rotateTo(targetAngle, rotateLeft, rotateRight);
       stepBackward(stepDurationByDistance(distanceDiff));
     } else {
+      rotateTo(targetAngle, rotateLeftForward, rotateRightForward);
       stepForward(stepDurationByDistance(distanceDiff));
     }
   } while (abs(distanceDiff) > 5); 
+}
+
+void goToObstacle(int angle) {
+  goSlowlyToObstacle(angle);
 }
 
 int randomAngle() {
@@ -298,11 +301,13 @@ int getDistanceInMm() {
 
 void loop() 
 {
-  rotateTo(scanForBestDirection(360), rotateLeft, rotateRight);
-  goToObstacle();
+  int angle = scanForBestDirection(360);
+  rotateTo(angle, rotateLeft, rotateRight);
+  goSlowlyToObstacle(angle);
 
   // scanForBestDirection(90);
   // rotateBy(-90, rotateLeftForward, rotateRightForward);
 
-  delay(1000);
+  // goToObstacle(getAngle());
+  // delay(1000);
 }
