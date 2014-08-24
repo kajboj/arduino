@@ -176,23 +176,22 @@ void printVal(String msg, int val) {
 
 int chooseDirection(int angleRange) {
   int maxDistance = 0; 
-  int maxDistanceAngle; 
+  int maxDistanceAngle = 0; 
   int initialAngle = getAngle();
   int rotation = round((float)angleRange / DISTANCE_SCAN_SAMPLE_COUNT);
 
   for(int angle=initialAngle; angle<=initialAngle+angleRange; angle+=rotation) {
     int distance = getDistanceInMm();
-    if (distance > maxDistance) {
+    if (distance > maxDistance && !isInfinite(distance)) {
       maxDistance = distance;
       maxDistanceAngle = getAngle();
     }
 
-    printVal("angle = ", angle);
-    printVal("distance = ", distance);
-    printVal("maxDistance = ", maxDistance);
-    printVal("maxDistanceAngle = ", maxDistanceAngle);
-
-    delay(500);
+    // printVal("angle = ", angle);
+    // printVal("distance = ", distance);
+    // printVal("maxDistance = ", maxDistance);
+    // printVal("maxDistanceAngle = ", maxDistanceAngle);
+    // delay(500);
 
     rotateTo(angle);
   }
@@ -261,32 +260,37 @@ boolean isInfinite(int distance) {
 }
 
 int getDistanceInMm() {
-  unsigned long duration;
-  int sumDuration = 0;
+  unsigned long avgDuration;
+  unsigned long sumDuration = 0;
+  int goodSampleCount = 0;
 
   for(int i=0; i<RANGE_FINDER_REPEAT; i++) {
     ping();
-    sumDuration += pulseIn(echoPin, HIGH);
+    unsigned long duration = pulseIn(echoPin, HIGH);
+    if (duration > 0) {
+      sumDuration += duration;
+      goodSampleCount++;
+    }
   }
 
-  duration = round((float)sumDuration / RANGE_FINDER_REPEAT);
+  if (goodSampleCount == 0) { return INFINITE_DISTANCE; };
 
-  if (duration == 0) {
+  avgDuration = round((float)sumDuration / goodSampleCount);
+
+  if (avgDuration == 0) {
     return INFINITE_DISTANCE;
   } else {
-    return (duration/2) / 2.91;
+    return (avgDuration/2) / 2.91;
   };
 }
 
 void loop() 
 {
-  // rotateTo(chooseDirection());
-  int angle = chooseDirection(90);
+  rotateTo(chooseDirection(360));
+  goToObstacle();
 
-  Serial.print("direction: ");
-  Serial.println(angle);
+  // chooseDirection(90);
+  // rotateBy(-90);
 
-  rotateBy(-90);
-
-  delay(5000);
+  delay(1000);
 }
