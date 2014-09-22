@@ -1,36 +1,29 @@
 #include "AFMotor.h"
 
-AF_DCMotor motorL(1);
-AF_DCMotor motorR(2);
+#define STEPS_PER_REV 2048
 
-int motorSpeed = 255;
+AF_Stepper motorL(STEPS_PER_REV, 1);
+AF_Stepper motorR(STEPS_PER_REV, 2);
 
-void setup() {
-  Serial.begin(9600);
-  motorR.setSpeed(motorSpeed);
-  motorL.setSpeed(motorSpeed);
+void rotate(int degrees, int direction) {
 }
 
-void loop() {
-  motorR.setSpeed(motorSpeed);
-  motorL.setSpeed(motorSpeed);
-  for(int i=0; i<40; i++) {
-    motorR.run(FORWARD);
-    motorL.run(FORWARD);
-    delay(10);
-    motorR.run(RELEASE);
-    motorL.run(RELEASE);
-    delay(100);
-  }
+void setup() {
+  motorR.setSpeed(10);
+  motorL.setSpeed(10);
+}
 
-  motorR.setSpeed(200);
-  motorL.setSpeed(200);
-  for(int i=0; i<10; i++) {
-    motorR.run(BACKWARD);
-    motorL.run(BACKWARD);
-    delay(10);
-    motorR.run(RELEASE);
-    motorL.run(RELEASE);
-    delay(200);
+int s = 1024;
+ 
+void loop() {
+  motorR.step(s, FORWARD, MICROSTEP); 
+  motorL.step(s, FORWARD, MICROSTEP); 
+  motorR.step(s, BACKWARD, MICROSTEP); 
+  motorL.step(s, BACKWARD, MICROSTEP); 
+
+  s = s/2;
+
+  if (s==0) {
+    s = 1024;
   }
 }
