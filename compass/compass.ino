@@ -43,7 +43,7 @@ DRDY      N/A
 #define DISTANCE_FROM_OBSTACLE_MM 150 
 #define DISTANCE_FROM_OBSTACLE_TOLERANCE_MM 10 
 
-#define RANGE_FINDER_REPEAT 5 
+#define RANGE_FINDER_REPEAT 3 
 
 AF_DCMotor motorL(1);
 AF_DCMotor motorR(2);
@@ -137,14 +137,15 @@ int stepDurationByDistance(int distanceDiff) {
   }
 }
 
-void rotateBy(int degrees, void (*rotateLeft)(int), void (*rotateRight)(int)) {
-  int targetAngle = addAngle(getAngle(), degrees);
+void rotateTo(int targetAngle, void (*rotateLeft)(int), void (*rotateRight)(int)) {
   int angleDiff;
 
   do {
     angleDiff = addAngle(targetAngle, -getAngle());
 
     if (angleDiff == 0) {
+      delay(100);
+      angleDiff = addAngle(targetAngle, -getAngle());
     } else if (angleDiff < 0) {
       rotateLeft(stepDurationByAngle(angleDiff));
     } else {
@@ -153,9 +154,9 @@ void rotateBy(int degrees, void (*rotateLeft)(int), void (*rotateRight)(int)) {
   } while (angleDiff != 0); 
 }
 
-void rotateTo(int degrees, void (*rotateLeft)(int), void (*rotateRight)(int)) {
-  int angleDiff = addAngle(degrees, -getAngle());
-  rotateBy(angleDiff, *rotateLeft, *rotateRight);
+void rotateBy(int degrees, void (*rotateLeft)(int), void (*rotateRight)(int)) {
+  int targetAngle = addAngle(getAngle(), degrees);
+  rotateTo(targetAngle, rotateLeft, rotateRight);
 }
 
 void goSlowlyToObstacle(int targetAngle) {
@@ -163,7 +164,7 @@ void goSlowlyToObstacle(int targetAngle) {
   int distanceDiff;
 
   do {
-    int distance = getDistanceInMm();
+    int distance = getTotalDistanceInMm();
 
     if (isInfinite(distance)) { return; };
 
@@ -205,7 +206,7 @@ int scanForBestDirection(int angleRange) {
   int rotation = round((float)angleRange / DISTANCE_SCAN_SAMPLE_COUNT);
 
   for(int angle=initialAngle; angle<=initialAngle+angleRange; angle+=rotation) {
-    int distance = getDistanceInMm();
+    int distance = getTotalDistanceInMm();
     if (distance > maxDistance && !isInfinite(distance)) {
       maxDistance = distance;
       maxDistanceAngle = getAngle();
@@ -296,13 +297,32 @@ unsigned long getPingDuration(int trigPin, int echoPin) {
   return pulseIn(echoPin, HIGH);
 }
 
-int getDistanceInMm() {
+int getLeftDistanceInMm() {
+  getDistanceInMm(TRIG_PIN_LEFT, ECHO_PIN_LEFT);
+}
+
+int getRightDistanceInMm() {
+  getDistanceInMm(TRIG_PIN_RIGHT, ECHO_PIN_RIGHT);
+}
+
+int getTotalDistanceInMm() {
+  int left = getLeftDistanceInMm();
+  int right = getRightDistanceInMm();
+
+  if (isInfinite(left) || isInfinite(right)) {
+    return INFINITE_DISTANCE;
+  };
+
+  return min(left, right);
+}
+
+int getDistanceInMm(int trigPin, int echoPin) {
   int sumDistance = 0;
   int goodSampleCount = 0;
 
   for(int i=0; i<RANGE_FINDER_REPEAT; i++) {
     int distance = 
-      pingDurationToMm(getPingDuration(TRIG_PIN_LEFT, ECHO_PIN_LEFT));
+      pingDurationToMm(getPingDuration(trigPin, echoPin));
 
     if (!isInfinite(distance)) {
       sumDistance += distance;
@@ -315,16 +335,64 @@ int getDistanceInMm() {
   return round((float) sumDistance / (float) goodSampleCount);
 }
 
+void equalizeDistance() {
+  int left = getLeftDistanceInMm();
+  int right = getRightDistanceInMm();
+  int diff = left - right;
+
+  while (abs(diff) > 5) {
+    if (diff > 0) {
+      rotateRight(ROTATION_SHORT_STEP_DURATION);
+    } else {
+      rotateLeft(ROTATION_SHORT_STEP_DURATION);
+    }
+
+    left = getLeftDistanceInMm();
+    right = getRightDistanceInMm();
+    diff = left - right;
+  }
+}
+
+void go(int targetAngle, int distanceToMove) {
+  int targetDistance = getTotalDistanceInMm() - distanceToMove;
+  int distanceDiff;
+
+  do {
+    int distance = getTotalDistanceInMm();
+
+    if (isInfinite(distance)) { return; };
+
+    distanceDiff = distance - targetDistance;
+
+    if (abs(distanceDiff) <= DISTANCE_FROM_OBSTACLE_TOLERANCE_MM) {
+    } else if (distanceDiff < 0) {
+      rotateTo(targetAngle, rotateLeft, rotateRight);
+      stepBackward(stepDurationByDistance(distanceDiff));
+    } else {
+      rotateTo(targetAngle, rotateLeftForward, rotateRightForward);
+      stepForward(stepDurationByDistance(distanceDiff));
+    }
+  } while (abs(distanceDiff) > DISTANCE_FROM_OBSTACLE_TOLERANCE_MM); 
+}
+
 void loop() 
 {
- printVal("getDistanceInMm() = ", getDistanceInMm());
+  // goSlowlyToObstacle(getAngle());
+  // equalizeDistance();
+  // go(getAngle(), 200);
+
+  // rotateTo(0, rotateLeft, rotateRight);
+  // delay(1000);
+  // rotateTo(90, rotateLeft, rotateRight);
+  // delay(1000);
+  // rotateTo(180, rotateLeft, rotateRight);
+  // delay(1000);
+  // rotateTo(-90, rotateLeft, rotateRight);
+  printVal("angle = ", getAngle());
+  delay(500);
+
 
   // int angle = scanForBestDirection(360);
   // rotateTo(angle, rotateLeft, rotateRight);
   // goSlowlyToObstacle(angle);
-
-  // scanForBestDirection(90);
-  // rotateBy(-90, rotateLeftForward, rotateRightForward);
-
-  // goToObstacle(getAngle());
 }
