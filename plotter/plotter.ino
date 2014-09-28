@@ -1,11 +1,14 @@
 #include "AFMotor.h"
 
 #define STEPS_PER_REV 2048
-#define STEP_COUNT 4 
+#define STEP_TYPE MICROSTEP
+#define STEP_COUNT 4
 #define LLEFT BACKWARD
 #define RLEFT BACKWARD
 #define LRIGHT FORWARD
 #define RRIGHT FORWARD
+#define PEN_PIN 9
+#define MOTOR_SPEED 12
 
 AF_Stepper motorL(STEPS_PER_REV, 2);
 AF_Stepper motorR(STEPS_PER_REV, 1);
@@ -13,8 +16,9 @@ AF_Stepper motorR(STEPS_PER_REV, 1);
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  motorR.setSpeed(8);
-  motorL.setSpeed(8);
+  motorR.setSpeed(MOTOR_SPEED);
+  motorL.setSpeed(MOTOR_SPEED);
+  pinMode(PEN_PIN, OUTPUT);
 }
 
 void ln() { step(motorL, LLEFT); }
@@ -39,13 +43,23 @@ void rr() {
 }
 
 void step(AF_Stepper motor, int dir) {
-  motor.step(STEP_COUNT, dir, MICROSTEP);
+  motor.step(STEP_COUNT, dir, STEP_TYPE);
+}
+
+void penUp() {
+  digitalWrite(PEN_PIN, LOW);
+  delay(100);
+}
+
+void penDown() {
+  digitalWrite(PEN_PIN, HIGH);
+  delay(100);
 }
 
 void dispatch(char c) {
   switch (c) {
-    case 'a': break;
-    case 'b': break;
+    case 'a': penUp(); break;
+    case 'b': penDown(); break;
     case 'c': ln(); break;
     case 'd': nl(); break;
     case 'e': rn(); break;
@@ -66,20 +80,26 @@ void repeat(int n, char step) {
 char c;
 
 void loop() {
-  int r = 100;
-  repeat(r, 'c');
-  repeat(r, 'd');
-  repeat(r, 'e');
-  repeat(r, 'f');
-  repeat(r, 'g');
-  repeat(r, 'h');
-  repeat(r, 'i');
-  repeat(r, 'j');
+  // int r = 20;
+  // penDown();
+  // repeat(r, 'c');
+  // repeat(r, 'd');
+  // repeat(r, 'e');
+  // repeat(r, 'f');
+  // repeat(r, 'g');
+  // repeat(r, 'h');
+  // repeat(r, 'i');
+  // repeat(r, 'j');
 
-  // if (Serial.available() > 0) {
-  //   c = Serial.read();
-  //   dispatch(c);
-  //   Serial.println(c);
-  //   Serial.flush();
-  // }
+  // penUp();
+  // delay(1000);
+  // penDown();
+  // delay(1000);
+
+  if (Serial.available() > 0) {
+    c = Serial.read();
+    dispatch(c);
+    Serial.println(c);
+    Serial.flush();
+  }
 }
