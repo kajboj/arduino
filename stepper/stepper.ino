@@ -1,6 +1,6 @@
 #define STEPS_PER_REV 4076
 #define STATE_COUNT 8
-#define WAIT 2
+#define WAIT 5
 
 #define LEFT_MOTOR 0
 #define RIGHT_MOTOR 1
@@ -65,8 +65,8 @@ void makeSteps(int count, void (*advanceLeftMotorState)(int), void (*advanceRigh
   }
 }
 
-void motorLeft(int motor) { next(motor); };
-void motorRight(int motor) { previous(motor); };
+void motorLeft(int motor) { previous(motor); };
+void motorRight(int motor) { next(motor); };
 
 void next(int motor) {
   motorStates[motor] = (motorStates[motor] + 1) % STATE_COUNT;
@@ -79,6 +79,6 @@ void previous(int motor) {
 void stay(int motor) {}
 
 void loop() {
-  makeSteps(STEPS_PER_REV, motorLeft, motorRight);
-  makeSteps(STEPS_PER_REV, stay, motorLeft);
+  makeSteps(STEPS_PER_REV/8, motorLeft, motorLeft);
+  makeSteps(STEPS_PER_REV/8, motorRight, motorRight);
 }
