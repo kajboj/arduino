@@ -2,21 +2,25 @@
 #define STATE_COUNT 8
 #define WAIT 1
 #define STEP_COUNT 1
+#define PEN_STEP_COUNT 10
 
-#define LEFT_MOTOR 0
-#define RIGHT_MOTOR 1
+#define MOTOR_COUNT 3
 
-#define PEN_PIN 10
+#define PEN_MOTOR 0
+#define LEFT_MOTOR 1
+#define RIGHT_MOTOR 2
 
-int motorStates[2] =  {
+int motorStates[MOTOR_COUNT] =  {
+  0, // pen
   0, // left
   0  // right
 };
 
-int pins[2][4] = {
+int pins[MOTOR_COUNT][4] = {
 // N1 N2 N3 N4
-  {9, 8, 7, 6}, // left
-  {5, 4, 3, 2}  // right
+  {13, 12, 11, 10}, // pen
+  { 9,  8,  7,  6}, // left
+  { 5,  4,  3,  2}, // right
 };
 
 int states[STATE_COUNT][4] = {
@@ -32,16 +36,16 @@ int states[STATE_COUNT][4] = {
 
 void setup() {
   Serial.begin(115200);
-  pMode(LEFT_MOTOR);
-  pMode(RIGHT_MOTOR);
-  pinMode(PEN_PIN, OUTPUT);
+  setPinMode(PEN_MOTOR);
+  setPinMode(LEFT_MOTOR);
+  setPinMode(RIGHT_MOTOR);
 
   outputMotorStateToPins();
 
   delay(1000);
 }
 
-void pMode(int motor) {
+void setPinMode(int motor) {
   pinMode(pins[motor][0], OUTPUT);
   pinMode(pins[motor][1], OUTPUT);
   pinMode(pins[motor][2], OUTPUT);
@@ -49,21 +53,22 @@ void pMode(int motor) {
 }
 
 void outputMotorStateToPins() {
-  outputState(LEFT_MOTOR, states[motorStates[LEFT_MOTOR]]);
+  outputState(PEN_MOTOR,   states[motorStates[PEN_MOTOR]]);
+  outputState(LEFT_MOTOR,  states[motorStates[LEFT_MOTOR]]);
   outputState(RIGHT_MOTOR, states[motorStates[RIGHT_MOTOR]]);
 }
 
 void outputState(int motor, int *state) {
-  digitalWrite(pins[motor][0], state[0]);
-  digitalWrite(pins[motor][1], state[1]);
-  digitalWrite(pins[motor][2], state[2]);
-  digitalWrite(pins[motor][3], state[3]);
+  for (int i = 0; i<4; i++) {
+    digitalWrite(pins[motor][i], state[i]);
+  }
 }
 
-void makeSteps(int count, void (*advanceLeftMotorState)(int), void (*advanceRightMotorState)(int)) {
+void makeSteps(int count, void (*advancePenMotor)(int), void (*advanceLeftMotor)(int), void (*advanceRightMotor)(int)) {
   for (int i=0; i<count; i++) {
-    advanceLeftMotorState(LEFT_MOTOR);
-    advanceRightMotorState(RIGHT_MOTOR);
+    advancePenMotor(PEN_MOTOR);
+    advanceLeftMotor(LEFT_MOTOR);
+    advanceRightMotor(RIGHT_MOTOR);
     outputMotorStateToPins();
     delay(WAIT);
   }
@@ -82,24 +87,16 @@ void previous(int motor) {
 
 void stay(int motor) {}
 
-void ln() { makeSteps(STEP_COUNT, motorLeft,  stay); }
-void nl() { makeSteps(STEP_COUNT, stay,       motorLeft); }
-void rn() { makeSteps(STEP_COUNT, motorRight, stay); }
-void nr() { makeSteps(STEP_COUNT, stay,       motorRight); }
-void lr() { makeSteps(STEP_COUNT, motorLeft,  motorRight); }
-void rl() { makeSteps(STEP_COUNT, motorRight, motorLeft); }
-void ll() { makeSteps(STEP_COUNT, motorLeft,  motorLeft); }
-void rr() { makeSteps(STEP_COUNT, motorRight, motorRight); }
-
-void penUp() {
-  digitalWrite(PEN_PIN, LOW);
-  delay(100);
-}
-
-void penDown() {
-  digitalWrite(PEN_PIN, HIGH);
-  delay(100);
-}
+void ln()      { makeSteps(STEP_COUNT,     stay,       motorLeft,  stay      ); }
+void nl()      { makeSteps(STEP_COUNT,     stay,       stay,       motorLeft ); }
+void rn()      { makeSteps(STEP_COUNT,     stay,       motorRight, stay      ); }
+void nr()      { makeSteps(STEP_COUNT,     stay,       stay,       motorRight); }
+void lr()      { makeSteps(STEP_COUNT,     stay,       motorLeft,  motorRight); }
+void rl()      { makeSteps(STEP_COUNT,     stay,       motorRight, motorLeft ); }
+void ll()      { makeSteps(STEP_COUNT,     stay,       motorLeft,  motorLeft ); }
+void rr()      { makeSteps(STEP_COUNT,     stay,       motorRight, motorRight); }
+void penUp()   { makeSteps(PEN_STEP_COUNT, motorLeft,  stay,       stay      ); }
+void penDown() { makeSteps(PEN_STEP_COUNT, motorRight, stay,       stay      ); }
 
 void dispatch(char c) {
   switch (c) {
