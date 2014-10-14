@@ -1,6 +1,6 @@
 #define STEPS_PER_REV 4076
 #define STATE_COUNT 8
-#define WAIT 1
+#define WAIT 2
 #define STEP_COUNT 1
 
 #define LEFT_MOTOR 0
@@ -125,8 +125,8 @@ void repeat(int n, char step) {
 char c;
 
 void loop() {
-  // int r = 20;
-  // penUp();
+  // int r = 200;
+  // penDown();
   // repeat(r, 'c');
   // repeat(r, 'd');
   // repeat(r, 'e');
@@ -144,7 +144,7 @@ void loop() {
   if (Serial.available() > 0) {
     c = Serial.read();
     dispatch(c);
-    Serial.println(c);
+    Serial.println(String(c));
     Serial.flush();
   }
 }
