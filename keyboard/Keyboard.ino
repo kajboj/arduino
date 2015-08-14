@@ -4,57 +4,54 @@
  * 10-kilohm resistor attached from pin 4 to ground
  */
 
-const int buttonPin = 2;
-int previousButtonState = LOW;
-int buttonState = LOW;
+typedef struct {
+  int pin;
+  char code;
+  unsigned long lastDebounceTime;
+  int previousState;
+  int state;
+} key;
 
-unsigned long lastDebounceTime = 0;
-const unsigned long debounceDelay = 10;
+key keys[] = {
+  { 4, 'a', 0, LOW, LOW }
+};
 
-unsigned long triggerTime = 0;
-boolean autoRepeat = false;
-const unsigned long autoRepeatDelay = 600;
-const unsigned long autoRepeatTime = 100;
+// static const char key = KEY_LEFT_SHIFT;
+// static const unsigned int keyCount = 3;
+static const unsigned long debounceDelay = 10;
+
+void update(key *button) {
+  int reading = digitalRead(button->pin);
+
+  if (reading != button->previousState) {
+    button->lastDebounceTime = millis();
+  }
+
+  if ((millis() - button->lastDebounceTime) > debounceDelay) {
+    if (reading != button->state) {
+      if ((reading == HIGH) && (button->state == LOW)) {
+        Keyboard.press(button->code);
+      }
+
+      if ((reading == LOW) && (button->state == HIGH)) {
+        Keyboard.release(button->code);
+      }
+
+      button->state = reading;
+    }
+  }
+
+  button->previousState = reading;
+}
 
 void setup() {
-  pinMode(buttonPin, INPUT);
+  pinMode(keys[0].pin, INPUT);
   Keyboard.begin();
 }
 
 void loop() {
-  int reading = digitalRead(buttonPin);
-
-  if (reading != previousButtonState) {
-    lastDebounceTime = millis();
-  }
-
-  if ((millis() - lastDebounceTime) > debounceDelay) {
-    if (reading != buttonState) {
-      if ((reading == HIGH) && (buttonState == LOW)) {
-        Keyboard.print("a");
-        triggerTime = millis();
-        autoRepeat = false;
-      }
-
-      buttonState = reading;
-    }
-
-    if ((reading == HIGH) && (buttonState == HIGH)) {
-      if (autoRepeat) {
-        if ((millis() - triggerTime) > autoRepeatTime) {
-          Keyboard.print("a");
-          triggerTime = millis();
-        }
-      } else {
-        if ((millis() - triggerTime) > autoRepeatDelay) {
-          Keyboard.print("a");
-          triggerTime = millis();
-          autoRepeat = true;
-        }
-      }
-    }
-  }
-
-  previousButtonState = reading;
+  //for(int i=0; i<keyCount; i++) {
+    update(&keys[0]);
+  //}
 }
 
