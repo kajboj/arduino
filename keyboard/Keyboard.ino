@@ -32,7 +32,7 @@ static const int keyCount = sizeof(keys)/sizeof(Key);
 static const int NO_KEY_PRESSED = 0;
 
 char chordMap[4];
-int lastChordChangeTime;
+unsigned long lastChordChangeTime;
 int previousChord;
 int chord;
 boolean waitingForChord;
@@ -121,7 +121,10 @@ void loop() {
   }
 
   if (chord != previousChord) {
-    Keyboard.release(chordMap[previousChord]);
+    if (previousChord != NO_KEY_PRESSED) {
+      Keyboard.release(chordMap[previousChord]);
+    }
+
     lastChordChangeTime = millis();
 
     if (chord != NO_KEY_PRESSED) {
