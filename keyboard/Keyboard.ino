@@ -78,7 +78,7 @@ void handleModifier(Key *key) {
   }
 }
 
-void handleNonModfier(Key *key) {
+void handleNonModifier(Key *key) {
   switch(key->event) {
     case JUST_PRESSED:
       key->pressTime = millis();
@@ -106,7 +106,7 @@ void loop() {
     if (key->isModifier) {
       handleModifier(key);
     } else {
-      handleModifier(key);
+      handleNonModifier(key);
     }
   }
 }
