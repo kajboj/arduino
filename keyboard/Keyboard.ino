@@ -1,35 +1,36 @@
-/*
- The circuit:
- * pushbutton attached from pin 4 to +5V
- * 10-kilohm resistor attached from pin 4 to ground
- */
+static const unsigned long DEBOUNCE_DELAY = 10;
+static const unsigned long CHORDING_DELAY = 50;
 
 typedef int KeyEvent;
 
-static const KeyEvent NOTHING  = 0;
-static const KeyEvent PRESSED  = 1;
-static const KeyEvent RELEASED = 2;
+static const KeyEvent NOTHING_HAPPENED = 0;
+static const KeyEvent JUST_PRESSED     = 1;
+static const KeyEvent JUST_RELEASED    = 2;
+
+static const int PRESSED  = HIGH;
+static const int RELEASED = LOW;
 
 typedef struct {
   int pin;
   char code;
+  boolean isModifier;
   unsigned long lastDebounceTime;
   int previousState;
   int state;
   KeyEvent event;
+  int pressTime;
 } Key;
 
 Key keys[] = {
-  { 2, (char) KEY_LEFT_SHIFT },
-  { 3, 'a' },
-  { 4, 'b' }
+  { 2, (char) KEY_LEFT_SHIFT, true },
+  { 3, 'a', false },
+  { 4, 'b', false}
 };
 
 static const int keyCount = sizeof(keys)/sizeof(Key);
-static const unsigned long DEBOUNCE_DELAY = 10;
 
 void updateEvents(Key *button) {
-  button->event = NOTHING;
+  button->event = NOTHING_HAPPENED;
 
   int reading = digitalRead(button->pin);
 
@@ -40,11 +41,11 @@ void updateEvents(Key *button) {
   if ((millis() - button->lastDebounceTime) > DEBOUNCE_DELAY) {
     if (reading != button->state) {
       if ((reading == HIGH) && (button->state == LOW)) {
-        button->event = PRESSED;
+        button->event = JUST_PRESSED;
       }
 
       if ((reading == LOW) && (button->state == HIGH)) {
-        button->event = RELEASED;
+        button->event = JUST_RELEASED;
       }
 
       button->state = reading;
@@ -59,10 +60,40 @@ void setup() {
     keys[i].lastDebounceTime = 0;
     keys[i].previousState = LOW;
     keys[i].state = LOW;
-    keys[i].event = NOTHING;
+    keys[i].event = NOTHING_HAPPENED;
+    keys[i].pressTime = 0;
     pinMode(keys[i].pin, INPUT);
   }
   Keyboard.begin();
+}
+
+void handleModifier(Key *key) {
+  switch(key->event) {
+    case JUST_PRESSED:
+      Keyboard.press(key->code);
+      break;
+    case JUST_RELEASED:
+      Keyboard.release(key->code);
+      break;
+  }
+}
+
+void handleNonModfier(Key *key) {
+  switch(key->event) {
+    case JUST_PRESSED:
+      key->pressTime = millis();
+      break;
+    case JUST_RELEASED:
+      Keyboard.release(key->code);
+      key->pressTime = 0;
+      break;
+    default:
+      if (key->state == PRESSED) {
+        if (millis() - key->pressTime > CHORDING_DELAY) {
+          Keyboard.press(key->code);
+        }
+      }
+  }
 }
 
 void loop() {
@@ -72,13 +103,10 @@ void loop() {
 
   for(int i=0; i<keyCount; i++) {
     Key *key = &keys[i];
-    switch(key->event) {
-      case PRESSED:
-        Keyboard.press(key->code);
-        break;
-      case RELEASED:
-        Keyboard.release(key->code);
-        break;
+    if (key->isModifier) {
+      handleModifier(key);
+    } else {
+      handleModifier(key);
     }
   }
 }
