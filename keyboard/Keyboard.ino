@@ -13,11 +13,12 @@ typedef struct {
 } key;
 
 key keys[] = {
-  { 4, 'a', 0, LOW, LOW }
+  { 2, KEY_LEFT_SHIFT },
+  { 3, 'a' },
+  { 4, 'b' }
 };
 
-// static const char key = KEY_LEFT_SHIFT;
-// static const unsigned int keyCount = 3;
+static const int keyCount = sizeof(keys)/sizeof(key);
 static const unsigned long debounceDelay = 10;
 
 void update(key *button) {
@@ -45,13 +46,18 @@ void update(key *button) {
 }
 
 void setup() {
-  pinMode(keys[0].pin, INPUT);
+  for(int i=0; i<keyCount; i++) {
+    keys[i].lastDebounceTime = 0;
+    keys[i].previousState = LOW;
+    keys[i].state = LOW;
+    pinMode(keys[i].pin, INPUT);
+  }
   Keyboard.begin();
 }
 
 void loop() {
-  //for(int i=0; i<keyCount; i++) {
-    update(&keys[0]);
-  //}
+  for(int i=0; i<keyCount; i++) {
+    update(&keys[i]);
+  }
 }
 
