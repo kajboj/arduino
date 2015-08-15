@@ -1,5 +1,5 @@
 static const unsigned long DEBOUNCE_DELAY = 10;
-static const unsigned long CHORDING_DELAY = 50;
+static const unsigned long CHORDING_DELAY = 30;
 
 typedef int KeyEvent;
 
@@ -14,20 +14,28 @@ typedef struct {
   int pin;
   char code;
   boolean isModifier;
+  int mask;
   unsigned long lastDebounceTime;
   int previousState;
   int state;
   KeyEvent event;
-  int pressTime;
 } Key;
 
 Key keys[] = {
-  { 2, (char) KEY_LEFT_SHIFT, true },
-  { 3, 'a', false },
-  { 4, 'b', false}
+  { 2, (char) KEY_LEFT_SHIFT, true, 0 },
+
+  { 3, ' ', false, 0b0000000000000001 },
+  { 4, ' ', false, 0b0000000000000010 }
 };
 
 static const int keyCount = sizeof(keys)/sizeof(Key);
+static const int NO_KEY_PRESSED = 0;
+
+char chordMap[4];
+int lastChordChangeTime;
+int previousChord;
+int chord;
+boolean waitingForChord;
 
 void updateEvents(Key *button) {
   button->event = NOTHING_HAPPENED;
@@ -61,9 +69,18 @@ void setup() {
     keys[i].previousState = LOW;
     keys[i].state = LOW;
     keys[i].event = NOTHING_HAPPENED;
-    keys[i].pressTime = 0;
     pinMode(keys[i].pin, INPUT);
   }
+
+  chordMap[0b0000000000000001] = 'a';
+  chordMap[0b0000000000000010] = 'b';
+  chordMap[0b0000000000000011] = 'c';
+
+  lastChordChangeTime = 0;
+  previousChord = 0;
+  chord = 0;
+  waitingForChord = false;
+
   Keyboard.begin();
 }
 
@@ -81,18 +98,11 @@ void handleModifier(Key *key) {
 void handleNonModifier(Key *key) {
   switch(key->event) {
     case JUST_PRESSED:
-      key->pressTime = millis();
+      chord = chord | key->mask;
       break;
     case JUST_RELEASED:
-      Keyboard.release(key->code);
-      key->pressTime = 0;
+      chord = chord ^ key->mask;
       break;
-    default:
-      if (key->state == PRESSED) {
-        if (millis() - key->pressTime > CHORDING_DELAY) {
-          Keyboard.press(key->code);
-        }
-      }
   }
 }
 
@@ -107,6 +117,24 @@ void loop() {
       handleModifier(key);
     } else {
       handleNonModifier(key);
+    }
+  }
+
+  if (chord != previousChord) {
+    Keyboard.release(chordMap[previousChord]);
+    lastChordChangeTime = millis();
+
+    if (chord != NO_KEY_PRESSED) {
+      waitingForChord = true;
+    }
+    
+    previousChord = chord;
+  } else {
+    if (waitingForChord) {
+      if (millis() - lastChordChangeTime > CHORDING_DELAY) {
+        Keyboard.press(chordMap[chord]);
+        waitingForChord = false;
+      }
     }
   }
 }
