@@ -36,27 +36,35 @@ typedef struct {
 } Key;
 
 Key allKeys[] = {
-  { 2, (char) KEY_LEFT_SHIFT, true, 0 },
+  { 6, (char) KEY_LEFT_CTRL, true, 0 },
+  { 8, (char) KEY_LEFT_SHIFT, true, 0 },
 
-  { 3, ' ', false, 0b0000000000000001 },
-  { 4, ' ', false, 0b0000000000000010 }
+  { 2, ' ', false, 0b0000000000010000 },
+  { 3, ' ', false, 0b0000000000001000 },
+  { 4, ' ', false, 0b0000000000000100 },
+  { 7, ' ', false, 0b0000000000000001 },
+  { 5, ' ', false, 0b0000000000000010 },
 };
 static const int allKeyCount = sizeof(allKeys)/sizeof(Key);
 
 Key *modifiers[] = {
-  &allKeys[0]
+  &allKeys[0],
+  &allKeys[1],
 };
 static const int modifierCount = sizeof(modifiers)/sizeof(Key*);
 
 Key *keys[] = {
-  &allKeys[1],
-  &allKeys[2]
+  &allKeys[2],
+  &allKeys[3],
+  &allKeys[4],
+  &allKeys[5],
+  &allKeys[6],
 };
 static const int keyCount = sizeof(keys)/sizeof(Key*);
 
 static const int NO_KEY_PRESSED = 0;
 
-char chordMap[4];
+char chordMap[32];
 unsigned long lastChordChangeTime;
 int previousChord;
 int chord;
@@ -103,9 +111,18 @@ void setup() {
     pinMode(allKeys[i].pin, INPUT);
   }
 
-  chordMap[0b0000000000000001] = 'a';
-  chordMap[0b0000000000000010] = 'b';
-  chordMap[0b0000000000000011] = 'c';
+  chordMap[0b0000000000010000] = 'i';
+  chordMap[0b0000000000001000] = 'o';
+  chordMap[0b0000000000000100] = 'a';
+  chordMap[0b0000000000000010] = 't';
+  chordMap[0b0000000000000001] = 'e';
+  chordMap[0b0000000000000011] = 'n';
+  chordMap[0b0000000000000101] = 's';
+  chordMap[0b0000000000001001] = 'h';
+  chordMap[0b0000000000010001] = 'r';
+  chordMap[0b0000000000000110] = 'd';
+  chordMap[0b0000000000001010] = 'l';
+  chordMap[0b0000000000010010] = 'c';
 
   lastChordChangeTime = 0;
   previousChord = 0;
