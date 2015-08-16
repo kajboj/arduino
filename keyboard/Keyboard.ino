@@ -1,14 +1,21 @@
 static const unsigned long DEBOUNCE_DELAY = 10;
-static const unsigned long CHORDING_DELAY = 30;
+static const unsigned long CHORDING_DELAY = 40;
 
 typedef int KeyEvent;
-
 static const KeyEvent NOTHING_HAPPENED = 0;
 static const KeyEvent JUST_PRESSED     = 1;
 static const KeyEvent JUST_RELEASED    = 2;
 
 static const int PRESSED  = HIGH;
 static const int RELEASED = LOW;
+
+typedef int ModifierState;
+static const ModifierState OFF                  = 0;
+static const ModifierState AWAITING_STICKY      = 1;
+static const ModifierState STUCK_AWAITING_LOCK  = 2;
+static const ModifierState HELD_AWAITING_LOCK   = 3;
+static const ModifierState STUCK                = 4;
+static const ModifierState HELD                 = 5;
 
 typedef struct {
   int pin;
@@ -21,14 +28,25 @@ typedef struct {
   KeyEvent event;
 } Key;
 
-Key keys[] = {
+Key allKeys[] = {
   { 2, (char) KEY_LEFT_SHIFT, true, 0 },
 
   { 3, ' ', false, 0b0000000000000001 },
   { 4, ' ', false, 0b0000000000000010 }
 };
+static const int allKeyCount = sizeof(allKeys)/sizeof(Key);
 
-static const int keyCount = sizeof(keys)/sizeof(Key);
+Key *modifiers[] = {
+  &allKeys[0]
+};
+static const int modifierCount = sizeof(modifiers)/sizeof(Key*);
+
+Key *keys[] = {
+  &allKeys[1],
+  &allKeys[2]
+};
+static const int keyCount = sizeof(keys)/sizeof(Key*);
+
 static const int NO_KEY_PRESSED = 0;
 
 char chordMap[4];
@@ -37,39 +55,42 @@ int previousChord;
 int chord;
 boolean waitingForChord;
 
-void updateEvents(Key *button) {
-  button->event = NOTHING_HAPPENED;
+void updateEvents() {
+  for(int i=0; i<allKeyCount; i++) {
+    Key *key = &allKeys[i];
+    key->event = NOTHING_HAPPENED;
 
-  int reading = digitalRead(button->pin);
+    int reading = digitalRead(key->pin);
 
-  if (reading != button->previousState) {
-    button->lastDebounceTime = millis();
-  }
-
-  if ((millis() - button->lastDebounceTime) > DEBOUNCE_DELAY) {
-    if (reading != button->state) {
-      if ((reading == HIGH) && (button->state == LOW)) {
-        button->event = JUST_PRESSED;
-      }
-
-      if ((reading == LOW) && (button->state == HIGH)) {
-        button->event = JUST_RELEASED;
-      }
-
-      button->state = reading;
+    if (reading != key->previousState) {
+      key->lastDebounceTime = millis();
     }
-  }
 
-  button->previousState = reading;
+    if ((millis() - key->lastDebounceTime) > DEBOUNCE_DELAY) {
+      if (reading != key->state) {
+        if ((reading == HIGH) && (key->state == LOW)) {
+          key->event = JUST_PRESSED;
+        }
+
+        if ((reading == LOW) && (key->state == HIGH)) {
+          key->event = JUST_RELEASED;
+        }
+
+        key->state = reading;
+      }
+    }
+
+    key->previousState = reading;
+  }
 }
 
 void setup() {
-  for(int i=0; i<keyCount; i++) {
-    keys[i].lastDebounceTime = 0;
-    keys[i].previousState = LOW;
-    keys[i].state = LOW;
-    keys[i].event = NOTHING_HAPPENED;
-    pinMode(keys[i].pin, INPUT);
+  for(int i=0; i<allKeyCount; i++) {
+    allKeys[i].lastDebounceTime = 0;
+    allKeys[i].previousState = LOW;
+    allKeys[i].state = LOW;
+    allKeys[i].event = NOTHING_HAPPENED;
+    pinMode(allKeys[i].pin, INPUT);
   }
 
   chordMap[0b0000000000000001] = 'a';
@@ -84,42 +105,35 @@ void setup() {
   Keyboard.begin();
 }
 
-void handleModifier(Key *key) {
-  switch(key->event) {
-    case JUST_PRESSED:
-      Keyboard.press(key->code);
-      break;
-    case JUST_RELEASED:
-      Keyboard.release(key->code);
-      break;
-  }
-}
-
-void handleNonModifier(Key *key) {
-  switch(key->event) {
-    case JUST_PRESSED:
-      chord = chord | key->mask;
-      break;
-    case JUST_RELEASED:
-      chord = chord ^ key->mask;
-      break;
-  }
-}
-
-void loop() {
-  for(int i=0; i<keyCount; i++) {
-    updateEvents(&keys[i]);
-  }
-
-  for(int i=0; i<keyCount; i++) {
-    Key *key = &keys[i];
-    if (key->isModifier) {
-      handleModifier(key);
-    } else {
-      handleNonModifier(key);
+void handleModifiers() {
+  for(int i=0; i<modifierCount; i++) {
+    Key *key = modifiers[i];
+    switch(key->event) {
+      case JUST_PRESSED:
+        Keyboard.press(key->code);
+        break;
+      case JUST_RELEASED:
+        Keyboard.release(key->code);
+        break;
     }
   }
+}
 
+void handleKeys() {
+  for(int i=0; i<keyCount; i++) {
+    Key *key = keys[i];
+    switch(key->event) {
+      case JUST_PRESSED:
+        chord = chord | key->mask;
+        break;
+      case JUST_RELEASED:
+        chord = chord ^ key->mask;
+        break;
+    }
+  }
+}
+
+void processChord() {
   if (chord != previousChord) {
     if (previousChord != NO_KEY_PRESSED) {
       Keyboard.release(chordMap[previousChord]);
@@ -130,7 +144,7 @@ void loop() {
     if (chord != NO_KEY_PRESSED) {
       waitingForChord = true;
     }
-    
+
     previousChord = chord;
   } else {
     if (waitingForChord) {
@@ -140,4 +154,13 @@ void loop() {
       }
     }
   }
+}
+
+void loop() {
+  updateEvents();
+
+  handleModifiers();
+  handleKeys();
+
+  processChord();
 }
