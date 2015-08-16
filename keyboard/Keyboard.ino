@@ -1,6 +1,9 @@
 static const unsigned long DEBOUNCE_DELAY = 10;
 static const unsigned long CHORDING_DELAY = 40;
 
+static const unsigned long STICKY_DELAY = 150;
+static const unsigned long LOCK_DELAY = 300;
+
 typedef int KeyEvent;
 static const KeyEvent NOTHING_HAPPENED = 0;
 static const KeyEvent JUST_PRESSED     = 1;
@@ -10,12 +13,14 @@ static const int PRESSED  = HIGH;
 static const int RELEASED = LOW;
 
 typedef int ModifierState;
-static const ModifierState OFF                  = 0;
-static const ModifierState AWAITING_STICKY      = 1;
-static const ModifierState STUCK_AWAITING_LOCK  = 2;
-static const ModifierState HELD_AWAITING_LOCK   = 3;
-static const ModifierState STUCK                = 4;
-static const ModifierState HELD                 = 5;
+static const ModifierState OFF                    = 0;
+static const ModifierState AWAITING_STICKY        = 1;
+static const ModifierState STUCK_AWAITING_LOCK    = 2;
+static const ModifierState HELD_AWAITING_LOCK     = 3;
+static const ModifierState RELEASED_AWAITING_LOCK = 4;
+static const ModifierState STUCK                  = 5;
+static const ModifierState LOCKED                 = 6;
+static const ModifierState HELD                   = 7;
 
 typedef struct {
   int pin;
@@ -26,6 +31,8 @@ typedef struct {
   int previousState;
   int state;
   KeyEvent event;
+  ModifierState modifierState;
+  unsigned long lastPressTime;
 } Key;
 
 Key allKeys[] = {
@@ -54,6 +61,7 @@ unsigned long lastChordChangeTime;
 int previousChord;
 int chord;
 boolean waitingForChord;
+boolean chordTriggered;
 
 void updateEvents() {
   for(int i=0; i<allKeyCount; i++) {
@@ -90,6 +98,8 @@ void setup() {
     allKeys[i].previousState = LOW;
     allKeys[i].state = LOW;
     allKeys[i].event = NOTHING_HAPPENED;
+    allKeys[i].modifierState = OFF;
+    allKeys[i].lastPressTime = 0;
     pinMode(allKeys[i].pin, INPUT);
   }
 
@@ -101,6 +111,7 @@ void setup() {
   previousChord = 0;
   chord = 0;
   waitingForChord = false;
+  chordTriggered = false;
 
   Keyboard.begin();
 }
@@ -108,13 +119,81 @@ void setup() {
 void handleModifiers() {
   for(int i=0; i<modifierCount; i++) {
     Key *key = modifiers[i];
+
+    if (millis() - key->lastPressTime > STICKY_DELAY) {
+      if (key->modifierState == AWAITING_STICKY) {
+        key->modifierState = HELD_AWAITING_LOCK;
+      }
+    };
+
+    if (millis() - key->lastPressTime > LOCK_DELAY) {
+      switch(key->modifierState) {
+        case STUCK_AWAITING_LOCK:
+          key->modifierState = STUCK;
+          break;
+        case HELD_AWAITING_LOCK:
+          key->modifierState = HELD;
+          break;
+        case RELEASED_AWAITING_LOCK:
+          key->modifierState = OFF;
+          break;
+      }
+    };
+
     switch(key->event) {
-      case JUST_PRESSED:
-        Keyboard.press(key->code);
-        break;
       case JUST_RELEASED:
-        Keyboard.release(key->code);
+        switch(key->modifierState) {
+          case AWAITING_STICKY:
+            chordTriggered = false;
+            key->modifierState = STUCK_AWAITING_LOCK;
+            break;
+          case HELD_AWAITING_LOCK:
+            Keyboard.release(key->code);
+            key->modifierState = RELEASED_AWAITING_LOCK;
+            break;
+          case HELD:
+            Keyboard.release(key->code);
+            key->modifierState = OFF;
+            break;
+        };
         break;
+      case JUST_PRESSED:
+        switch(key->modifierState) {
+          case OFF:
+            Keyboard.press(key->code);
+            key->lastPressTime = millis();
+            key->modifierState = AWAITING_STICKY;
+            break;
+          case STUCK_AWAITING_LOCK:
+            key->modifierState = LOCKED;
+            break;
+          case LOCKED:
+            Keyboard.release(key->code);
+            key->modifierState = OFF;
+            break;
+          case STUCK:
+            Keyboard.release(key->code);
+            key->modifierState = OFF;
+            break;
+          case RELEASED_AWAITING_LOCK:
+            Keyboard.press(key->code);
+            key->modifierState = LOCKED;
+            break;
+        };
+        break;
+    };
+
+    if (chordTriggered) {
+      switch(key->modifierState) {
+        case STUCK_AWAITING_LOCK:
+          Keyboard.release(key->code);
+          key->modifierState = OFF;
+          break;
+        case STUCK:
+          Keyboard.release(key->code);
+          key->modifierState = OFF;
+          break;
+      }
     }
   }
 }
@@ -150,6 +229,7 @@ void processChord() {
     if (waitingForChord) {
       if (millis() - lastChordChangeTime > CHORDING_DELAY) {
         Keyboard.press(chordMap[chord]);
+        chordTriggered = true;
         waitingForChord = false;
       }
     }
@@ -159,8 +239,8 @@ void processChord() {
 void loop() {
   updateEvents();
 
-  handleModifiers();
   handleKeys();
-
   processChord();
+
+  handleModifiers();
 }
