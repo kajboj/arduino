@@ -1,5 +1,7 @@
+#include "chord_map"
+
 static const unsigned long DEBOUNCE_DELAY = 10;
-static const unsigned long CHORDING_DELAY = 60;
+static const unsigned long CHORDING_DELAY = 40;
 
 static const unsigned long STICKY_DELAY = 150;
 static const unsigned long LOCK_DELAY = 300;
@@ -64,7 +66,6 @@ static const int keyCount = sizeof(keys)/sizeof(Key*);
 
 static const int NO_KEY_PRESSED = 0;
 
-char chordMap[32];
 unsigned long lastChordChangeTime;
 int previousChord;
 int chord;
@@ -111,39 +112,13 @@ void setup() {
     pinMode(allKeys[i].pin, INPUT);
   }
 
-  // Character Frequency:
-  // SPC e t a o i n s r h l d c u m f g p y w ENT b , . v k - " _ ' x ) ( ; 0
-  // j 1 q = 2 : z / * ! ? $ 3 5 > { } 4 9 [ ] 8 6 7 \ + | & < % @ # ^ ` ~
-  chordMap[0b0000000000000001] = ' ';
-  chordMap[0b0000000000000010] = KEY_BACKSPACE;
-  chordMap[0b0000000000000100] = 'e';
-  chordMap[0b0000000000001000] = 't';
-  chordMap[0b0000000000010000] = 'a';
-  chordMap[0b0000000000000011] = 'o';
-  chordMap[0b0000000000000101] = 'i';
-  chordMap[0b0000000000001001] = 'n';
-  chordMap[0b0000000000010001] = 's';
-  chordMap[0b0000000000000110] = 'r';
-  chordMap[0b0000000000001010] = 'h';
-  chordMap[0b0000000000010010] = 'l';
-  chordMap[0b0000000000001100] = 'd';
-
-  chordMap[0b0000000000000111] = 'c';
-  chordMap[0b0000000000001011] = 'u';
-  chordMap[0b0000000000010011] = 'm';
-  chordMap[0b0000000000001101] = 'f';
-  chordMap[0b0000000000011001] = 'g';
-
-  chordMap[0b0000000000011100] = 'p';
-  chordMap[0b0000000000011110] = 'y';
-  chordMap[0b0000000000001111] = 'w';
-  chordMap[0b0000000000011101] = 'b';
-
   lastChordChangeTime = 0;
   previousChord = 0;
   chord = 0;
   waitingForChord = false;
   chordTriggered = false;
+
+  setupChordMap();
 
   Keyboard.begin();
 }
