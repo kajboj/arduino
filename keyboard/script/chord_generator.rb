@@ -35,7 +35,7 @@ class Chord
   end
 
   def to_s
-    render(LEFT) + "   " + render(RIGHT)
+    render(LEFT) + " " + render(RIGHT)
   end
 
   def ==(other)
@@ -100,7 +100,7 @@ class Chord
 
   def render(hand)
     hand.map do |finger|
-      @keys.include?(finger) ? " O " : " . "
+      @keys.include?(finger) ? "O" : "."
     end.join
   end
 end
@@ -139,8 +139,6 @@ end
 # KEY_LEFT_GUI
 
 fixed = {
-  ' '               => parse('....O .....'),
-  '_'               => parse('....O .O...'),
   'KEY_BACKSPACE'   => parse('..... .O...'),
   'KEY_RETURN'      => parse('...O. .O...'),
   'KEY_UP_ARROW'    => parse('..O.. ..O..'),
@@ -153,6 +151,16 @@ fixed = {
   'KEY_PAGE_DOWN'   => parse('..O.O .O...'),
   'KEY_HOME'        => parse('..OOO .....'),
   'KEY_END'         => parse('..O.O ...O.'),
+  ' '               => parse('....O .....'),
+  '_'               => parse('....O .O...'),
+  '('               => parse('O.... ..O..'),
+  ')'               => parse('..O.. ....O'),
+  '{'               => parse('..OO. O....'),
+  '}'               => parse('....O .OO..'),
+  '['               => parse('.O... .OO..'),
+  ']'               => parse('..OO. ...O.'),
+  '<'               => parse('..O.. OO...'),
+  '>'               => parse('...OO ..O..'),
 }
 
 #'KEY_F1' =>
@@ -169,9 +177,6 @@ fixed = {
 #'KEY_F12' =>
 
 free = [
-  'KEY_INSERT',
-  'KEY_DELETE',
-
   'e', 't', 'a', 'o', 'i', 'n', 's', 'r',
   'h', 'l', 'd', 'c', 'u', 'm', 'f', 'g',
   'p', 'y', 'w', 'b', ',', '.', 'v', 'k',
@@ -180,7 +185,9 @@ free = [
   '*', '!', '?', '$', '3', '5', '>', '{',
   '}', '4', '9', '[', ']', '8', '6', '7',
   '\\', '+', '|', '&', '<', '%', '@', '#',
-  '^', '`', '~'
+  '^', '`', '~',
+  'KEY_INSERT',
+  'KEY_DELETE',
 ]
 
 chords = (1..3).to_enum.map do |key_count|
