@@ -1,3 +1,5 @@
+require 'set'
+
 FINGERS = {
   left: {
     pinky:  0,
@@ -27,12 +29,17 @@ def right(finger)
 end
 
 class Chord
+  attr_reader :keys
   def initialize(keys)
     @keys = keys
   end
 
   def to_s
     render(LEFT) + "   " + render(RIGHT)
+  end
+
+  def ==(other)
+    @keys.sort == other.keys.sort
   end
 
   def comfort
@@ -98,12 +105,111 @@ class Chord
   end
 end
 
+class Mapping
+  def initialize(key, chord)
+    @key   = key
+    @chord = chord
+  end
+
+  def to_s
+    @key.ljust(16, ' ') + @chord.to_s
+  end
+end
+
+def parse(fingers)
+  fs = fingers.gsub(' ', '').split('').map.with_index do |f, index|
+    f == 'O' ? index : nil
+  end.compact
+  Chord.new(fs)
+end
+
+def subtract(a1, a2)
+  result = []
+  a1.each do |e|
+    if !a2.find {|x| x == e}
+      result << e
+    end
+  end
+  result
+end
+
+# KEY_LEFT_CTRL
+# KEY_LEFT_SHIFT
+# KEY_LEFT_ALT
+# KEY_LEFT_GUI
+
+fixed = {
+  ' '               => parse('....O .....'),
+  '_'               => parse('....O .O...'),
+  'KEY_BACKSPACE'   => parse('..... .O...'),
+  'KEY_RETURN'      => parse('...O. .O...'),
+  'KEY_UP_ARROW'    => parse('..O.. ..O..'),
+  'KEY_DOWN_ARROW'  => parse('..O.. .O...'),
+  'KEY_LEFT_ARROW'  => parse('..OO. .....'),
+  'KEY_RIGHT_ARROW' => parse('..O.. ...O.'),
+  'KEY_ESC'         => parse('....O O....'),
+  'KEY_TAB'         => parse('..O.O .....'),
+  'KEY_PAGE_UP'     => parse('..O.O ..O..'),
+  'KEY_PAGE_DOWN'   => parse('..O.O .O...'),
+  'KEY_HOME'        => parse('..OOO .....'),
+  'KEY_END'         => parse('..O.O ...O.'),
+}
+
+#'KEY_F1' =>
+#'KEY_F2' =>
+#'KEY_F3' =>
+#'KEY_F4' =>
+#'KEY_F5' =>
+#'KEY_F6' =>
+#'KEY_F7' =>
+#'KEY_F8' =>
+#'KEY_F9' =>
+#'KEY_F10' =>
+#'KEY_F11' =>
+#'KEY_F12' =>
+
+free = [
+  'KEY_INSERT',
+  'KEY_DELETE',
+
+  'e', 't', 'a', 'o', 'i', 'n', 's', 'r',
+  'h', 'l', 'd', 'c', 'u', 'm', 'f', 'g',
+  'p', 'y', 'w', 'b', ',', '.', 'v', 'k',
+  '-', '"', '\'', 'x', ')', '(', ';', '0',
+  'j', '1', 'q', '=', '2', ':', 'z', '/',
+  '*', '!', '?', '$', '3', '5', '>', '{',
+  '}', '4', '9', '[', ']', '8', '6', '7',
+  '\\', '+', '|', '&', '<', '%', '@', '#',
+  '^', '`', '~'
+]
+
 chords = (1..3).to_enum.map do |key_count|
   (0..9).to_a.combination(key_count).map do |chord|
     Chord.new(chord)
   end
 end.flatten.sort_by(&:comfort).reverse
 
-chords.each.with_index do |chord, i|
-  puts "#{i.to_s.rjust(3, ' ')}  #{chord} #{chord.comfort.to_s.rjust(16, ' ')}"
+free_chords = subtract(chords, fixed.values)
+
+mappings = fixed.map do |key, chord|
+  Mapping.new(key, chord)
 end
+
+mappings += free.zip(free_chords[0..free.size-1]).map do |key, chord|
+  Mapping.new(key, chord)
+end
+
+def display_mappings(mappings)
+  mappings.each.with_index do |chord, i|
+    puts "#{i.to_s.rjust(3, ' ')}  #{chord}"
+  end
+end
+
+def display_chords(chords)
+  chords.each.with_index do |chord, i|
+    puts "#{i.to_s.rjust(3, ' ')}  #{chord} #{chord.comfort.to_s.rjust(16, ' ')}"
+  end
+end
+
+# display_chords(free_chords)
+display_mappings(mappings)
