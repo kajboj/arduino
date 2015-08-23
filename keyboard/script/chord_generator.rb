@@ -38,6 +38,10 @@ class Chord
     render(LEFT) + " " + render(RIGHT)
   end
 
+  def binary
+    render(LEFT, '1', '0') + render(RIGHT, '1', '0')
+  end
+
   def ==(other)
     @keys.sort == other.keys.sort
   end
@@ -45,6 +49,7 @@ class Chord
   def comfort
     features = [
       possible?,
+      !(include_left?(:pinky) && include_right?(:pinky)),
       one? && !include?(:pinky),
       two? && !include?(:pinky),
       one? && include?(:pinky),
@@ -121,15 +126,15 @@ class Chord
     bool ? 1 : 0
   end
 
-  def render(hand)
+  def render(hand, positive = "O", negative = ".")
     hand.map do |finger|
-      @keys.include?(finger) ? "O" : "."
+      @keys.include?(finger) ? positive : negative
     end.join
   end
 end
 
 class Mapping
-  attr_reader :key
+  attr_reader :key, :chord
 
   def initialize(key, chord)
     @key   = key
@@ -226,8 +231,8 @@ mappings += free.zip(free_chords[0..free.size-1]).map do |key, chord|
 end
 
 def display_mappings(mappings)
-  mappings.sort_by(&:key).each.with_index do |chord, i|
-    puts "#{i.to_s.rjust(3, ' ')}  #{chord}"
+  mappings.sort_by(&:key).each.with_index do |mapping, i|
+    puts "#{i.to_s.rjust(3, ' ')}  #{mapping}"
   end
 end
 
@@ -237,5 +242,21 @@ def display_chords(chords)
   end
 end
 
-display_chords(free_chords)
-#display_mappings(mappings)
+def display_arduino(mappings)
+  puts 'char chordMap[32];'
+  puts 'void setupChordMap() {'
+
+  mappings.sort_by(&:key).each do |mapping|
+    puts "  chordMap[0b000000#{mapping.chord.binary}] = '#{mapping.key}';"
+  end
+
+  puts '}'
+end
+
+if ARGV[0] == 'c'
+  display_chords(free_chords)
+elsif ARGV[0] == 'a'
+  display_arduino(mappings)
+else
+  display_mappings(mappings)
+end
