@@ -44,6 +44,7 @@ class Chord
 
   def comfort
     features = [
+      possible?,
       one? && !include?(:pinky),
       two? && !include?(:pinky),
       one? && include?(:pinky),
@@ -65,6 +66,20 @@ class Chord
   end
 
   private
+
+  def possible?
+    !(
+      (
+        include_left?(:pinky) &&
+        include_left?(:middle) &&
+        !include_left?(:ring)
+      ) || (
+        include_right?(:pinky) &&
+        include_right?(:middle) &&
+        !include_right?(:ring)
+      )
+    )
+  end
 
   def any?(keys)
     (@keys - keys).size < @keys.size
@@ -90,8 +105,16 @@ class Chord
     @keys.size == 3
   end
 
+  def include_left?(finger)
+    @keys.include?(left(finger))
+  end
+
+  def include_right?(finger)
+    @keys.include?(right(finger))
+  end
+
   def include?(finger)
-    @keys.include?(left(finger)) || @keys.include?(right(finger))
+    include_left?(finger) || include_right?(finger)
   end
 
   def b_to_i(bool)
@@ -106,6 +129,8 @@ class Chord
 end
 
 class Mapping
+  attr_reader :key
+
   def initialize(key, chord)
     @key   = key
     @chord = chord
@@ -177,17 +202,11 @@ fixed = {
 #'KEY_F12' =>
 
 free = [
-  'e', 't', 'a', 'o', 'i', 'n', 's', 'r',
-  'h', 'l', 'd', 'c', 'u', 'm', 'f', 'g',
-  'p', 'y', 'w', 'b', ',', '.', 'v', 'k',
-  '-', '"', '\'', 'x', ')', '(', ';', '0',
-  'j', '1', 'q', '=', '2', ':', 'z', '/',
-  '*', '!', '?', '$', '3', '5', '>', '{',
-  '}', '4', '9', '[', ']', '8', '6', '7',
-  '\\', '+', '|', '&', '<', '%', '@', '#',
-  '^', '`', '~',
-  'KEY_INSERT',
-  'KEY_DELETE',
+  'e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'h', 'l', 'd', 'c', 'u', 'm', 'f',
+  'g', 'p', 'y', 'w', 'b', ',', '.', 'v', 'k', '-', '"', '\'', 'x', ';', '0',
+  'j', '1', 'q', '=', '2', ':', 'z', '/', '*', '!', '?', '$', '3', '5', '4',
+  '9', '8', '6', '7', '\\', '+', '|', '&', '%', '@', '#', '^', '`', '~',
+  'KEY_INSERT', 'KEY_DELETE',
 ]
 
 chords = (1..3).to_enum.map do |key_count|
@@ -207,7 +226,7 @@ mappings += free.zip(free_chords[0..free.size-1]).map do |key, chord|
 end
 
 def display_mappings(mappings)
-  mappings.each.with_index do |chord, i|
+  mappings.sort_by(&:key).each.with_index do |chord, i|
     puts "#{i.to_s.rjust(3, ' ')}  #{chord}"
   end
 end
@@ -218,5 +237,5 @@ def display_chords(chords)
   end
 end
 
-# display_chords(free_chords)
-display_mappings(mappings)
+display_chords(free_chords)
+#display_mappings(mappings)
