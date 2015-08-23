@@ -41,11 +41,11 @@ Key allKeys[] = {
   { 6, (char) KEY_LEFT_CTRL, true, 0 },
   { 8, (char) KEY_LEFT_SHIFT, true, 0 },
 
-  { 2, ' ', false, 0b0000000000010000 },
-  { 3, ' ', false, 0b0000000000001000 },
-  { 4, ' ', false, 0b0000000000000100 },
-  { 7, ' ', false, 0b0000000000000001 },
-  { 5, ' ', false, 0b0000000000000010 },
+  { 2, ' ', false, 0b0000001000000000 },
+  { 3, ' ', false, 0b0000000100000000 },
+  { 4, ' ', false, 0b0000000010000000 },
+  { 7, ' ', false, 0b0000000000100000 },
+  { 5, ' ', false, 0b0000000001000000 },
 };
 static const int allKeyCount = sizeof(allKeys)/sizeof(Key);
 

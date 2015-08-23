@@ -142,7 +142,7 @@ class Mapping
   end
 
   def to_s
-    @key.ljust(16, ' ') + @chord.to_s
+    @key.ljust(12, ' ') + @chord.to_s
   end
 end
 
@@ -169,28 +169,28 @@ end
 # KEY_LEFT_GUI
 
 fixed = {
-  'KEY_BACKSPACE'   => parse('..... .O...'),
-  'KEY_RETURN'      => parse('...O. .O...'),
-  'KEY_UP_ARROW'    => parse('..O.. ..O..'),
-  'KEY_DOWN_ARROW'  => parse('..O.. .O...'),
-  'KEY_LEFT_ARROW'  => parse('..OO. .....'),
-  'KEY_RIGHT_ARROW' => parse('..O.. ...O.'),
-  'KEY_ESC'         => parse('....O O....'),
-  'KEY_TAB'         => parse('..O.O .....'),
-  'KEY_PAGE_UP'     => parse('..O.O ..O..'),
-  'KEY_PAGE_DOWN'   => parse('..O.O .O...'),
-  'KEY_HOME'        => parse('..OOO .....'),
-  'KEY_END'         => parse('..O.O ...O.'),
-  ' '               => parse('....O .....'),
-  '_'               => parse('....O .O...'),
-  '('               => parse('O.... ..O..'),
-  ')'               => parse('..O.. ....O'),
-  '{'               => parse('..OO. O....'),
-  '}'               => parse('....O .OO..'),
-  '['               => parse('.O... .OO..'),
-  ']'               => parse('..OO. ...O.'),
-  '<'               => parse('..O.. OO...'),
-  '>'               => parse('...OO ..O..'),
+  'BACKSPACE'   => parse('..... .O...'),
+  'RETURN'      => parse('...O. .O...'),
+  'UP_ARROW'    => parse('..O.. ..O..'),
+  'DOWN_ARROW'  => parse('..O.. .O...'),
+  'LEFT_ARROW'  => parse('..OO. .....'),
+  'RIGHT_ARROW' => parse('..O.. ...O.'),
+  'ESC'         => parse('....O O....'),
+  'TAB'         => parse('..O.O .....'),
+  'PAGE_UP'     => parse('..O.O ..O..'),
+  'PAGE_DOWN'   => parse('..O.O .O...'),
+  'HOME'        => parse('..OOO .....'),
+  'END'         => parse('..O.O ...O.'),
+  ' '           => parse('....O .....'),
+  '_'           => parse('....O .O...'),
+  '('           => parse('O.... ..O..'),
+  ')'           => parse('..O.. ....O'),
+  '{'           => parse('..OO. O....'),
+  '}'           => parse('....O .OO..'),
+  '['           => parse('.O... .OO..'),
+  ']'           => parse('..OO. ...O.'),
+  '<'           => parse('..O.. OO...'),
+  '>'           => parse('...OO ..O..'),
 }
 
 #'KEY_F1' =>
@@ -211,7 +211,7 @@ free = [
   'g', 'p', 'y', 'w', 'b', ',', '.', 'v', 'k', '-', '"', '\\\'', 'x', ';', '0',
   'j', '1', 'q', '=', '2', ':', 'z', '/', '*', '!', '?', '$', '3', '5', '4',
   '9', '8', '6', '7', '\\\\', '+', '|', '&', '%', '@', '#', '^', '`', '~',
-  'KEY_INSERT', 'KEY_DELETE',
+  'INSERT', 'DELETE',
 ]
 
 chords = (1..3).to_enum.map do |key_count|
@@ -243,11 +243,16 @@ def display_chords(chords)
 end
 
 def display_arduino(mappings)
-  puts 'char chordMap[32];'
+  puts "char chordMap[#{2**10}];"
   puts 'void setupChordMap() {'
 
   mappings.sort_by(&:key).each do |mapping|
-    puts "  chordMap[0b000000#{mapping.chord.binary}] = '#{mapping.key}';"
+    key = if mapping.key =~ /[A-Z]/
+            "KEY_#{mapping.key}"
+          else
+            "'#{mapping.key}'"
+          end
+    puts "  chordMap[0b000000#{mapping.chord.binary}] = #{key};"
   end
 
   puts '}'
