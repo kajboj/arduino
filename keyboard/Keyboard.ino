@@ -1,7 +1,7 @@
 #include "chord_map"
 
 static const unsigned long DEBOUNCE_DELAY = 10;
-static const unsigned long CHORDING_DELAY = 40;
+static const unsigned long CHORDING_DELAY = 60;
 
 static const unsigned long STICKY_DELAY = 150;
 static const unsigned long LOCK_DELAY = 300;
