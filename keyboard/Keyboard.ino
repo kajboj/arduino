@@ -38,29 +38,43 @@ typedef struct {
 } Key;
 
 Key allKeys[] = {
-  { 6, (char) KEY_LEFT_CTRL, true, 0 },
-  { 8, (char) KEY_LEFT_SHIFT, true, 0 },
+  {  6, (char) KEY_LEFT_CTRL,  true, 0 },
+  {  8, (char) KEY_LEFT_SHIFT, true, 0 },
+  { A5, (char) KEY_LEFT_ALT,   true, 0 },
+  { A4, (char) KEY_LEFT_GUI,   true, 0 },
 
-  { 2, ' ', false, 0b0000001000000000 },
-  { 3, ' ', false, 0b0000000100000000 },
-  { 4, ' ', false, 0b0000000010000000 },
-  { 7, ' ', false, 0b0000000000100000 },
-  { 5, ' ', false, 0b0000000001000000 },
+  {  2, ' ', false, 0b0000001000000000 },
+  {  3, ' ', false, 0b0000000100000000 },
+  {  4, ' ', false, 0b0000000010000000 },
+  {  5, ' ', false, 0b0000000001000000 },
+  {  7, ' ', false, 0b0000000000100000 },
+  {  9, ' ', false, 0b0000000000010000 },
+  { 10, ' ', false, 0b0000000000001000 },
+  { 11, ' ', false, 0b0000000000000100 },
+  { 12, ' ', false, 0b0000000000000010 },
+  { 13, ' ', false, 0b0000000000000001 },
 };
 static const int allKeyCount = sizeof(allKeys)/sizeof(Key);
 
 Key *modifiers[] = {
   &allKeys[0],
   &allKeys[1],
+  &allKeys[2],
+  &allKeys[3],
 };
 static const int modifierCount = sizeof(modifiers)/sizeof(Key*);
 
 Key *keys[] = {
-  &allKeys[2],
-  &allKeys[3],
   &allKeys[4],
   &allKeys[5],
   &allKeys[6],
+  &allKeys[7],
+  &allKeys[8],
+  &allKeys[9],
+  &allKeys[10],
+  &allKeys[11],
+  &allKeys[12],
+  &allKeys[13],
 };
 static const int keyCount = sizeof(keys)/sizeof(Key*);
 
