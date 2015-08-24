@@ -1,9 +1,9 @@
 #include "chord_map"
 
 static const unsigned long DEBOUNCE_DELAY = 10;
-static const unsigned long CHORDING_DELAY = 80;
+static const unsigned long CHORDING_DELAY = 50;
 
-static const unsigned long STICKY_DELAY = 250;
+static const unsigned long STICKY_DELAY = 200;
 static const unsigned long LOCK_DELAY = 500;
 
 typedef int KeyEvent;
