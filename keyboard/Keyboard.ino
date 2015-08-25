@@ -233,6 +233,19 @@ void handleKeys() {
   }
 }
 
+int countOnes(int n) {
+  int i = n;
+  int count = 0;
+
+  while (i > 0) {
+    if (i % 2 == 1) {
+      count += 1;
+    }
+    i /= 2;
+  }
+  return count;
+}
+
 void processChord() {
   if (chord != previousChord) {
     if (previousChord != NO_KEY_PRESSED) {
@@ -241,8 +254,15 @@ void processChord() {
 
     lastChordChangeTime = millis();
 
-    if (chord != NO_KEY_PRESSED) {
+    if (countOnes(chord) > countOnes(previousChord)) {
       waitingForChord = true;
+    } else {
+      if (waitingForChord) {
+        Keyboard.press(chordMap[previousChord]);
+        Keyboard.release(chordMap[previousChord]);
+        chordTriggered = true;
+        waitingForChord = false;
+      }
     }
 
     previousChord = chord;
