@@ -210,8 +210,8 @@ free = [
   'e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'h', 'l', 'd', 'c', 'u', 'm', 'f',
   'g', 'p', 'y', 'w', 'b', ',', '.', 'v', 'k', '-', '"', '\\\'', 'x', ';', '0',
   'j', '1', 'q', '=', '2', ':', 'z', '/', '*', '!', '?', '$', '3', '5', '4',
-  '9', '8', '6', '7', '\\\\', '+', '|', '&', '%', '@', '#', '^', '`', '~',
-  'INSERT', 'DELETE',
+  '9', '8', '6', '7', '\\\\', '+', '|', '&', '%', '@', '#', '^', '`', '~', '£',
+  'INSERT', 'DELETE', '¬'
 ]
 
 chords = (1..3).to_enum.map do |key_count|
@@ -242,7 +242,23 @@ def display_chords(chords)
   end
 end
 
-def display_arduino(mappings)
+UK_LAYOUT = {
+  '@' => '"',
+  '"' => '@',
+  '#' => '\\\\',
+  '£' => '#',
+  '¬' => '~',
+  '~' => '|'
+}
+
+def uk_layout(input)
+  input.map do |m|
+    Mapping.new(UK_LAYOUT.fetch(m.key, m.key), m.chord)
+  end
+end
+
+def display_arduino(input_mappings)
+  mappings = uk_layout(input_mappings)
   puts "char chordMap[#{2**10}];"
   puts 'void setupChordMap() {'
 
