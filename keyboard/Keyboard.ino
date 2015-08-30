@@ -246,6 +246,16 @@ int countOnes(int n) {
   return count;
 }
 
+void triggerChord(int chord) {
+  if (chord == 0b0000000001100000) {
+    Keyboard.press(100);
+  } else {
+    Keyboard.press(chord);
+  }
+  chordTriggered = true;
+  waitingForChord = false;
+}
+
 void processChord() {
   if (chord != previousChord) {
     if (previousChord != NO_KEY_PRESSED) {
@@ -258,10 +268,8 @@ void processChord() {
       waitingForChord = true;
     } else {
       if (waitingForChord) {
-        Keyboard.press(chordMap[previousChord]);
+        triggerChord(chordMap[previousChord]);
         Keyboard.release(chordMap[previousChord]);
-        chordTriggered = true;
-        waitingForChord = false;
       }
     }
 
@@ -269,9 +277,7 @@ void processChord() {
   } else {
     if (waitingForChord) {
       if (millis() - lastChordChangeTime > CHORDING_DELAY) {
-        Keyboard.press(chordMap[chord]);
-        chordTriggered = true;
-        waitingForChord = false;
+        triggerChord(chordMap[chord]);
       }
     }
   }
