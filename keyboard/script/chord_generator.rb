@@ -1,4 +1,5 @@
 require 'set'
+require './script/ascii_map'
 
 FINGERS = {
   left: {
@@ -208,10 +209,10 @@ fixed = {
 
 free = [
   'e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'h', 'l', 'd', 'c', 'u', 'm', 'f',
-  'g', 'p', 'y', 'w', 'b', ',', '.', 'v', 'k', '-', '"', '\\\'', 'x', ';', '0',
+  'g', 'p', 'y', 'w', 'b', ',', '.', 'v', 'k', '-', '"', '\'', 'x', ';', '0',
   'j', '1', 'q', '=', '2', ':', 'z', '/', '*', '!', '?', '$', '3', '5', '4',
-  '9', '8', '6', '7', '\\\\', '+', '|', '&', '%', '@', '#', '^', '`', '~', '£',
-  'INSERT', 'DELETE', '¬'
+  '9', '8', '6', '7', '\\', '+', '|', '&', '%', '@', '#', '^', '`', '~', '£',
+  'INSERT', 'DELETE'
 ]
 
 chords = (1..3).to_enum.map do |key_count|
@@ -242,23 +243,7 @@ def display_chords(chords)
   end
 end
 
-UK_LAYOUT = {
-  '@' => '"',
-  '"' => '@',
-  '#' => '\\\\',
-  '£' => '#',
-  '¬' => '~',
-  '~' => '|'
-}
-
-def uk_layout(input)
-  input.map do |m|
-    Mapping.new(UK_LAYOUT.fetch(m.key, m.key), m.chord)
-  end
-end
-
-def display_arduino(input_mappings)
-  mappings = uk_layout(input_mappings)
+def display_arduino(mappings)
   puts "char chordMap[#{2**10}];"
   puts 'void setupChordMap() {'
 
@@ -266,9 +251,9 @@ def display_arduino(input_mappings)
     key = if mapping.key =~ /[A-Z]/
             "KEY_#{mapping.key}"
           else
-            "'#{mapping.key}'"
+            "0x" + ASCII_MAP_UK[mapping.key].to_s(16)
           end
-    puts "  chordMap[0b000000#{mapping.chord.binary}] = #{key};"
+    puts "  chordMap[0b000000#{mapping.chord.binary}] = #{key}; #{'//'.rjust(20)} #{mapping.key}"
   end
 
   puts '}'

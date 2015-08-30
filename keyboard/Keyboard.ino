@@ -169,11 +169,11 @@ void handleModifiers() {
             key->modifierState = STUCK_AWAITING_LOCK;
             break;
           case HELD_AWAITING_LOCK:
-            Keyboard.release(key->code);
+            Keyboard.release1(key->code);
             key->modifierState = RELEASED_AWAITING_LOCK;
             break;
           case HELD:
-            Keyboard.release(key->code);
+            Keyboard.release1(key->code);
             key->modifierState = OFF;
             break;
         };
@@ -181,7 +181,7 @@ void handleModifiers() {
       case JUST_PRESSED:
         switch(key->modifierState) {
           case OFF:
-            Keyboard.press(key->code);
+            Keyboard.press1(key->code);
             key->lastPressTime = millis();
             key->modifierState = AWAITING_STICKY;
             break;
@@ -189,15 +189,15 @@ void handleModifiers() {
             key->modifierState = LOCKED;
             break;
           case LOCKED:
-            Keyboard.release(key->code);
+            Keyboard.release1(key->code);
             key->modifierState = OFF;
             break;
           case STUCK:
-            Keyboard.release(key->code);
+            Keyboard.release1(key->code);
             key->modifierState = OFF;
             break;
           case RELEASED_AWAITING_LOCK:
-            Keyboard.press(key->code);
+            Keyboard.press1(key->code);
             key->modifierState = LOCKED;
             break;
         };
@@ -207,11 +207,11 @@ void handleModifiers() {
     if (chordTriggered) {
       switch(key->modifierState) {
         case STUCK_AWAITING_LOCK:
-          Keyboard.release(key->code);
+          Keyboard.release1(key->code);
           key->modifierState = OFF;
           break;
         case STUCK:
-          Keyboard.release(key->code);
+          Keyboard.release1(key->code);
           key->modifierState = OFF;
           break;
       }
@@ -246,20 +246,28 @@ int countOnes(int n) {
   return count;
 }
 
-void triggerChord(int chord) {
-  if (chord == 0b0000000001100000) {
-    Keyboard.press(100);
+void pressChord(int chord) {
+  if (chord == 0b0000000111100000) {
+    Keyboard.press1(100);
   } else {
-    Keyboard.press(chord);
+    Keyboard.press1(chordMap[chord]);
   }
   chordTriggered = true;
   waitingForChord = false;
 }
 
+void releaseChord(int chord) {
+  if (chord == 0b0000000111100000) {
+    Keyboard.release1(100);
+  } else {
+    Keyboard.release1(chordMap[chord]);
+  }
+}
+
 void processChord() {
   if (chord != previousChord) {
     if (previousChord != NO_KEY_PRESSED) {
-      Keyboard.release(chordMap[previousChord]);
+      releaseChord(previousChord);
     }
 
     lastChordChangeTime = millis();
@@ -268,8 +276,8 @@ void processChord() {
       waitingForChord = true;
     } else {
       if (waitingForChord) {
-        triggerChord(chordMap[previousChord]);
-        Keyboard.release(chordMap[previousChord]);
+        pressChord(previousChord);
+        releaseChord(previousChord);
       }
     }
 
@@ -277,7 +285,7 @@ void processChord() {
   } else {
     if (waitingForChord) {
       if (millis() - lastChordChangeTime > CHORDING_DELAY) {
-        triggerChord(chordMap[chord]);
+        pressChord(chord);
       }
     }
   }
