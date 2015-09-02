@@ -169,11 +169,11 @@ void handleModifiers() {
             key->modifierState = STUCK_AWAITING_LOCK;
             break;
           case HELD_AWAITING_LOCK:
-            Keyboard.release1(key->code);
+            Keyboard.release(key->code);
             key->modifierState = RELEASED_AWAITING_LOCK;
             break;
           case HELD:
-            Keyboard.release1(key->code);
+            Keyboard.release(key->code);
             key->modifierState = OFF;
             break;
         };
@@ -181,7 +181,7 @@ void handleModifiers() {
       case JUST_PRESSED:
         switch(key->modifierState) {
           case OFF:
-            Keyboard.press1(key->code);
+            Keyboard.press(key->code);
             key->lastPressTime = millis();
             key->modifierState = AWAITING_STICKY;
             break;
@@ -189,15 +189,15 @@ void handleModifiers() {
             key->modifierState = LOCKED;
             break;
           case LOCKED:
-            Keyboard.release1(key->code);
+            Keyboard.release(key->code);
             key->modifierState = OFF;
             break;
           case STUCK:
-            Keyboard.release1(key->code);
+            Keyboard.release(key->code);
             key->modifierState = OFF;
             break;
           case RELEASED_AWAITING_LOCK:
-            Keyboard.press1(key->code);
+            Keyboard.press(key->code);
             key->modifierState = LOCKED;
             break;
         };
@@ -207,11 +207,11 @@ void handleModifiers() {
     if (chordTriggered) {
       switch(key->modifierState) {
         case STUCK_AWAITING_LOCK:
-          Keyboard.release1(key->code);
+          Keyboard.release(key->code);
           key->modifierState = OFF;
           break;
         case STUCK:
-          Keyboard.release1(key->code);
+          Keyboard.release(key->code);
           key->modifierState = OFF;
           break;
       }
@@ -250,7 +250,7 @@ void pressChord(int chord) {
   if (chord == 0b0000000111100000) {
     Keyboard.press1(100);
   } else {
-    Keyboard.press1(chordMap[chord]);
+    Keyboard.press(chordMap[chord]);
   }
   chordTriggered = true;
   waitingForChord = false;
@@ -260,7 +260,7 @@ void releaseChord(int chord) {
   if (chord == 0b0000000111100000) {
     Keyboard.release1(100);
   } else {
-    Keyboard.release1(chordMap[chord]);
+    Keyboard.release(chordMap[chord]);
   }
 }
 
