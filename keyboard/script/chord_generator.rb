@@ -244,16 +244,13 @@ def display_chords(chords)
 end
 
 def display_arduino(mappings)
-  puts "char chordMap[#{2**10}];"
+  puts "Keystroke chordMap[#{2**10}];"
   puts 'void setupChordMap() {'
 
   mappings.sort_by(&:key).each do |mapping|
-    key = if mapping.key =~ /[A-Z]/
-            "KEY_#{mapping.key}"
-          else
-            "0x" + ASCII_MAP_UK[mapping.key].to_s(16)
-          end
-    puts "  chordMap[0b000000#{mapping.chord.binary}] = #{key}; #{'//'.rjust(20)} #{mapping.key}"
+    keystroke = ASCII_MAP_UK[mapping.key]
+    puts "  chordMap[0b000000#{mapping.chord.binary}].code = #{keystroke[0]}; #{'//'.rjust(20)} #{mapping.key}"
+    puts "  chordMap[0b000000#{mapping.chord.binary}].shift = #{keystroke[1]};"
   end
 
   puts '}'
