@@ -1,3 +1,6 @@
 F1..F12 don't work. It will require Fn key.
 
 Move to separate repo including full arduino core.
+
+Conserve memory by keeping chord map in compacted array and binary searching.
+
