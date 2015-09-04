@@ -43,6 +43,10 @@ class Chord
     render(LEFT, '1', '0') + render(RIGHT, '1', '0')
   end
 
+  def to_i
+    binary.to_i
+  end
+
   def ==(other)
     @keys.sort == other.keys.sort
   end
@@ -145,6 +149,10 @@ class Mapping
   def to_s
     @key.ljust(12, ' ') + @chord.to_s
   end
+
+  def to_i
+    @chord.to_i
+  end
 end
 
 def parse(fingers)
@@ -244,16 +252,16 @@ def display_chords(chords)
 end
 
 def display_arduino(mappings)
-  puts "Keystroke chordMap[#{2**10}];"
-  puts 'void setupChordMap() {'
+  size = mappings.size
+  puts "static const int chordMapSize = #{size};"
+  puts "Keystroke chordMap[chordMapSize] = {"
 
-  mappings.sort_by(&:key).each do |mapping|
+  mappings.sort_by(&:to_i).each do |mapping|
     keystroke = ASCII_MAP_UK[mapping.key]
-    puts "  chordMap[0b000000#{mapping.chord.binary}].code = #{keystroke[0]}; #{'//'.rjust(20)} #{mapping.key}"
-    puts "  chordMap[0b000000#{mapping.chord.binary}].shift = #{keystroke[1]};"
+    puts "  { 0b000000#{mapping.chord.binary}, #{keystroke[0].to_s.rjust(3)}, #{keystroke[1].to_s.ljust(5)} }, /* #{mapping.key} */"
   end
 
-  puts '}'
+  puts '};'
 end
 
 if ARGV[0] == 'c'

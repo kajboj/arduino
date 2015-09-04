@@ -1,4 +1,5 @@
 typedef struct {
+  short chord;
   char code;
   bool shift;
 } Keystroke;
@@ -137,8 +138,6 @@ void setup() {
   waitingForChord = false;
   chordTriggered = false;
 
-  setupChordMap();
-
   Keyboard.begin();
 }
 
@@ -251,22 +250,33 @@ int countOnes(int n) {
   return count;
 }
 
-void pressChord(int chord) {
-  if (chord == 0b0000000111100000) {
-    Keyboard.press1(100, true);
-  } else {
-    Keyboard.press1(chordMap[chord].code, chordMap[chord].shift);
+Keystroke* lookupChord(int chord) {
+  int imin = 0;
+  int imax = chordMapSize;
+
+  while (imin <= imax) {
+    int imid = imin + ((imax - imin) / 2);
+
+    if(chordMap[imid].chord == chord)
+      return &chordMap[imid];
+    else if (chordMap[imid].chord < chord)
+      imin = imid + 1;
+    else
+      imax = imid - 1;
   }
+  return &chordMap[0];
+}
+
+void pressChord(int chord) {
+  Keystroke* k = lookupChord(chord);
+  Keyboard.press1(k->code, k->shift);
   chordTriggered = true;
   waitingForChord = false;
 }
 
 void releaseChord(int chord) {
-  if (chord == 0b0000000111100000) {
-    Keyboard.release1(100, true);
-  } else {
-    Keyboard.release1(chordMap[chord].code, chordMap[chord].shift);
-  }
+  Keystroke* k = lookupChord(chord);
+  Keyboard.release1(k->code, k->shift);
 }
 
 void processChord() {
