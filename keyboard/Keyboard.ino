@@ -5,6 +5,7 @@ typedef struct {
 } Keystroke;
 
 #include "chord_map"
+#include "pin_map_v2"
 
 static const unsigned long DEBOUNCE_DELAY = 10;
 static const unsigned long CHORDING_DELAY = 50;
@@ -44,21 +45,20 @@ typedef struct {
 } Key;
 
 Key allKeys[] = {
-  {  6, (char) KEY_LEFT_CTRL,  true, 0 },
-  {  8, (char) KEY_LEFT_SHIFT, true, 0 },
-  { A5, (char) KEY_LEFT_ALT,   true, 0 },
-  { A4, (char) KEY_LEFT_GUI,   true, 0 },
-
-  {  2, ' ', false, 0b0000001000000000 },
-  {  3, ' ', false, 0b0000000100000000 },
-  {  4, ' ', false, 0b0000000010000000 },
-  {  5, ' ', false, 0b0000000001000000 },
-  {  7, ' ', false, 0b0000000000100000 },
-  {  9, ' ', false, 0b0000000000010000 },
-  { 10, ' ', false, 0b0000000000001000 },
-  { 11, ' ', false, 0b0000000000000100 },
-  { 12, ' ', false, 0b0000000000000010 },
-  { 13, ' ', false, 0b0000000000000001 },
+  { KEY_LEFT_CTRL_PIN,  (char) KEY_LEFT_CTRL,  true, 0 },
+  { KEY_LEFT_SHIFT_PIN, (char) KEY_LEFT_SHIFT, true, 0 },
+  { KEY_LEFT_ALT_PIN,   (char) KEY_LEFT_ALT,   true, 0 },
+  { KEY_LEFT_GUI_PIN,   (char) KEY_LEFT_GUI,   true, 0 },
+  { LEFT_PINKY_PIN,   ' ', false, 0b0000001000000000 },
+  { LEFT_RING_PIN,    ' ', false, 0b0000000100000000 },
+  { LEFT_MIDDLE_PIN,  ' ', false, 0b0000000010000000 },
+  { LEFT_INDEX_PIN,   ' ', false, 0b0000000001000000 },
+  { LEFT_THUMB_PIN,   ' ', false, 0b0000000000100000 },
+  { RIGHT_PINKY_PIN,  ' ', false, 0b0000000000010000 },
+  { RIGHT_RING_PIN,   ' ', false, 0b0000000000001000 },
+  { RIGHT_MIDDLE_PIN, ' ', false, 0b0000000000000100 },
+  { RIGHT_INDEX_PIN,  ' ', false, 0b0000000000000010 },
+  { RIGHT_THUMB_PIN,  ' ', false, 0b0000000000000001 },
 };
 static const int allKeyCount = sizeof(allKeys)/sizeof(Key);
 
